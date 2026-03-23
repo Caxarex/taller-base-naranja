@@ -23,7 +23,7 @@ export function ProtectedRoute({ children, requireShop = true }: ProtectedRouteP
   }
 
   if (!user) {
-    return <Navigate to="/auth/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (requireShop && !hasShop) {
