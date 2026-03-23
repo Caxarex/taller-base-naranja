@@ -124,8 +124,7 @@ export default function FioDetallePage() {
       <AbonoModal
         open={abonoOpen}
         onClose={() => setAbonoOpen(false)}
-        fiadoId={fiado.id}
-        balanceDue={Number(fiado.balance_due)}
+        fioId={fiado.id}
       />
     </AppShell>
   );
