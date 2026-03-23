@@ -2,26 +2,9 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge } from "@/components/StatusBadge";
-import { OrderTimeline } from "@/components/OrderTimeline";
 import { Wrench, Car, CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { OrdenEstado, OrdenTimeline as TTimeline } from "@/types";
-
-// Utility to format money
-function formatMoney(amount: number) {
-  return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(amount);
-}
-
-// Map DB status to display status
-const STATUS_LABELS: Record<string, OrdenEstado> = {
-  recibido: "Recibido",
-  diagnostico: "Diagnóstico",
-  cotizado: "Cotizado",
-  aprobado: "Aprobado",
-  en_reparacion: "En reparación",
-  listo: "Listo",
-  entregado: "Entregado",
-};
+import { formatMoney, STATUS_LABELS, STATUS_ORDER } from "@/lib/format";
 
 interface TrackingData {
   order: {
@@ -59,7 +42,7 @@ export default function TrackingPage() {
   useEffect(() => {
     if (!codigo) { setNotFound(true); setLoading(false); return; }
 
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data: result, error } = await supabase.rpc("get_public_tracking", { p_code: codigo });
       const parsed = result as unknown as TrackingData;
       if (error || !parsed?.order) {
@@ -69,7 +52,7 @@ export default function TrackingPage() {
       }
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [codigo]);
 
   if (loading) {
@@ -98,11 +81,8 @@ export default function TrackingPage() {
 
   const { order, vehicle, shop, timeline, items } = data;
   const displayStatus = STATUS_LABELS[order.status] ?? "Recibido";
-
-  const timelineFormatted: TTimeline[] = timeline.map((t) => ({
-    estado: STATUS_LABELS[t.status] ?? ("Recibido" as OrdenEstado),
-    fecha: t.created_at.split("T")[0],
-  }));
+  const eventMap = new Map(timeline.map((t) => [t.status, t.created_at]));
+  const currentIdx = STATUS_ORDER.indexOf(order.status as typeof STATUS_ORDER[number]);
 
   const partsTotal = items.filter((i) => i.type === "part").reduce((s, i) => s + i.total_price, 0);
   const laborTotal = items.filter((i) => i.type === "labor").reduce((s, i) => s + i.total_price, 0);
@@ -180,12 +160,39 @@ export default function TrackingPage() {
             </div>
 
             {/* Timeline */}
-            {timelineFormatted.length > 0 && (
-              <div className="rounded-xl border border-border bg-card p-5">
-                <h2 className="font-display text-sm font-semibold text-foreground mb-4">Estado de tu orden</h2>
-                <OrderTimeline timeline={timelineFormatted} estadoActual={displayStatus} />
+            <div className="rounded-xl border border-border bg-card p-5">
+              <h2 className="font-display text-sm font-semibold text-foreground mb-4">Estado de tu orden</h2>
+              <div className="flex flex-col gap-0">
+                {STATUS_ORDER.map((status, i) => {
+                  const isCompleted = i <= currentIdx && eventMap.has(status);
+                  const isCurrent = status === order.status;
+                  const ts = eventMap.get(status);
+                  return (
+                    <div key={status} className="flex items-start gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className={cn(
+                          "flex items-center justify-center rounded-full shrink-0 w-7 h-7 transition-all",
+                          isCompleted ? "bg-primary text-primary-foreground"
+                            : isCurrent ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                            : "bg-elevated text-muted-foreground border border-border"
+                        )}>
+                          {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span className="w-2 h-2 rounded-full bg-muted-foreground/50" />}
+                        </div>
+                        {i < STATUS_ORDER.length - 1 && (
+                          <div className={cn("w-0.5 h-8", i < currentIdx ? "bg-primary" : "bg-border")} />
+                        )}
+                      </div>
+                      <div className="pb-5 pt-0.5">
+                        <p className={cn("text-sm font-medium", isCompleted || isCurrent ? "text-foreground" : "text-muted-foreground")}>
+                          {STATUS_LABELS[status]}
+                        </p>
+                        {ts && <p className="text-xs text-muted-foreground mt-0.5">{new Date(ts).toLocaleDateString("es-MX")}</p>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -233,7 +240,9 @@ export default function TrackingPage() {
               {shop.phone && (
                 <div className="mt-4 pt-3 border-t border-border">
                   <p className="text-xs text-muted-foreground">¿Dudas? Contáctanos</p>
-                  <p className="text-sm font-medium text-foreground mt-1">{shop.phone}</p>
+                  <a href={`tel:${shop.phone}`} className="text-sm font-medium text-foreground mt-1 block hover:text-primary transition-colors">
+                    {shop.phone}
+                  </a>
                 </div>
               )}
             </div>
