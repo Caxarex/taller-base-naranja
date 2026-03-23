@@ -15,7 +15,7 @@ const estadoConfig: Record<string, { bg: string; text: string; dot: string }> = 
 };
 
 interface StatusBadgeProps {
-  estado: OrdenEstado | "vigente" | "vencido" | "pagado";
+  estado: string;
   className?: string;
   size?: "sm" | "md";
 }
