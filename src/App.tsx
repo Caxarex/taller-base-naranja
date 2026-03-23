@@ -35,6 +35,7 @@ const App = () => (
                 <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<RegisterPage />} />
                 <Route path="/tracking/:codigo" element={<TrackingPage />} />
+                <Route path="/landing" element={<LandingPage />} />
 
                 {/* Onboarding (requires auth, no shop yet) */}
                 <Route
