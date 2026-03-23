@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/components/ThemeProvider";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -35,9 +36,10 @@ function GradientOrb({ className }: { className?: string }) {
 }
 
 /* ───── Floating mock panel wrapper ───── */
-function FloatingPanel({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+const FloatingPanel = React.forwardRef<HTMLDivElement, { children: React.ReactNode; className?: string; delay?: number }>(({ children, className, delay = 0 }, ref) => {
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 30, rotateX: 8 }}
       whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
       viewport={{ once: true, margin: "-40px" }}
@@ -48,9 +50,9 @@ function FloatingPanel({ children, className, delay = 0 }: { children: React.Rea
       {children}
     </motion.div>
   );
-}
+});
+FloatingPanel.displayName = "FloatingPanel";
 
-/* ───── Nav ───── */
 function NavBar() {
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
