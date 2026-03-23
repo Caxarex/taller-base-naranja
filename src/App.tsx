@@ -17,6 +17,7 @@ import TrackingPage from "./app/TrackingPage";
 import LoginPage from "./app/auth/LoginPage";
 import RegisterPage from "./app/auth/RegisterPage";
 import SetupTallerPage from "./app/onboarding/SetupTallerPage";
+import LandingPage from "./app/LandingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<RegisterPage />} />
                 <Route path="/tracking/:codigo" element={<TrackingPage />} />
+                <Route path="/landing" element={<LandingPage />} />
 
                 {/* Onboarding (requires auth, no shop yet) */}
                 <Route
