@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "./ThemeProvider";
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Inicio" },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
   { to: "/ordenes", icon: ClipboardList, label: "Órdenes" },
   { to: "/fios", icon: HandCoins, label: "Fíos" },
 ];
