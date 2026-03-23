@@ -830,6 +830,11 @@ export default function LandingPage() {
             </div>
             <span className="font-display text-sm font-bold">Tallio</span>
           </div>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <Link to="/tracking" className="hover:text-foreground transition-colors">Consultar orden</Link>
+            <Link to="/auth/login" className="hover:text-foreground transition-colors">Ingresar</Link>
+            <Link to="/auth/register" className="hover:text-foreground transition-colors">Crear taller</Link>
+          </div>
           <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Tallio. Todos los derechos reservados.</p>
         </div>
       </footer>
