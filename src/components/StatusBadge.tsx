@@ -1,35 +1,36 @@
 import { type OrdenEstado } from "@/types";
 import { cn } from "@/lib/utils";
 
-const estadoConfig: Record<OrdenEstado, { bg: string; text: string }> = {
-  "Recibido": { bg: "bg-info/15", text: "text-info" },
-  "Diagnóstico": { bg: "bg-warning/15", text: "text-warning" },
-  "Cotizado": { bg: "bg-primary/15", text: "text-primary" },
-  "Aprobado": { bg: "bg-success/15", text: "text-success" },
-  "En reparación": { bg: "bg-warning/15", text: "text-warning" },
-  "Listo": { bg: "bg-success/15", text: "text-success" },
-  "Entregado": { bg: "bg-muted-foreground/15", text: "text-muted-foreground" },
+const estadoConfig: Record<string, { bg: string; text: string; dot: string }> = {
+  "Recibido": { bg: "bg-info/10", text: "text-info", dot: "bg-info" },
+  "Diagnóstico": { bg: "bg-warning/10", text: "text-warning", dot: "bg-warning" },
+  "Cotizado": { bg: "bg-primary/10", text: "text-primary", dot: "bg-primary" },
+  "Aprobado": { bg: "bg-success/10", text: "text-success", dot: "bg-success" },
+  "En reparación": { bg: "bg-warning/10", text: "text-warning", dot: "bg-warning" },
+  "Listo": { bg: "bg-success/10", text: "text-success", dot: "bg-success" },
+  "Entregado": { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
+  "vigente": { bg: "bg-info/10", text: "text-info", dot: "bg-info" },
+  "vencido": { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive" },
+  "pagado": { bg: "bg-success/10", text: "text-success", dot: "bg-success" },
 };
 
 interface StatusBadgeProps {
   estado: OrdenEstado | "vigente" | "vencido" | "pagado";
   className?: string;
+  size?: "sm" | "md";
 }
 
-export function StatusBadge({ estado, className }: StatusBadgeProps) {
-  let bg = "bg-muted";
-  let text = "text-muted-foreground";
-
-  if (estado === "vigente") { bg = "bg-warning/15"; text = "text-warning"; }
-  else if (estado === "vencido") { bg = "bg-destructive/15"; text = "text-destructive"; }
-  else if (estado === "pagado") { bg = "bg-success/15"; text = "text-success"; }
-  else if (estado in estadoConfig) {
-    const c = estadoConfig[estado as OrdenEstado];
-    bg = c.bg; text = c.text;
-  }
+export function StatusBadge({ estado, className, size = "sm" }: StatusBadgeProps) {
+  const config = estadoConfig[estado] || { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" };
 
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold", bg, text, className)}>
+    <span className={cn(
+      "inline-flex items-center gap-1.5 rounded-full font-medium",
+      config.bg, config.text,
+      size === "sm" ? "px-2.5 py-1 text-[11px]" : "px-3 py-1.5 text-xs",
+      className
+    )}>
+      <span className={cn("h-1.5 w-1.5 rounded-full", config.dot)} />
       {estado}
     </span>
   );
