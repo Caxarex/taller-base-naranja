@@ -32,10 +32,10 @@ const App = () => (
             <ShopProvider>
               <Routes>
                 {/* Public routes */}
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<RegisterPage />} />
                 <Route path="/tracking/:codigo" element={<TrackingPage />} />
-                <Route path="/landing" element={<LandingPage />} />
 
                 {/* Onboarding (requires auth, no shop yet) */}
                 <Route
@@ -48,7 +48,7 @@ const App = () => (
                 />
 
                 {/* Protected routes (require auth + shop) */}
-                <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 <Route path="/ordenes" element={<ProtectedRoute><OrdenesListPage /></ProtectedRoute>} />
                 <Route path="/ordenes/nueva" element={<ProtectedRoute><NuevaOrdenPage /></ProtectedRoute>} />
                 <Route path="/ordenes/:id" element={<ProtectedRoute><OrdenDetallePage /></ProtectedRoute>} />
