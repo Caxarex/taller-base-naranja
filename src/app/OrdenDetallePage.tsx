@@ -7,11 +7,40 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { formatMoney, STATUS_ORDER } from "@/lib/format";
-import { PageTransition, StaggerGroup, StaggerItem } from "@/components/motion";
-import { Car, User, FileText, Wrench, DollarSign, StickyNote, ArrowRight } from "lucide-react";
+import { PageTransition, motion } from "@/components/motion";
+import { Car, User, FileText, Wrench, DollarSign, StickyNote, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+
+function DetailSkeleton() {
+  return (
+    <div className="px-4 md:px-6 lg:px-8 py-6 max-w-4xl mx-auto space-y-4 animate-pulse">
+      <div className="h-7 w-32 bg-muted rounded" />
+      <div className="h-5 w-20 bg-muted rounded-full" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="h-24 bg-muted rounded-xl" />
+        <div className="h-24 bg-muted rounded-xl" />
+      </div>
+      <div className="h-48 bg-muted rounded-xl" />
+    </div>
+  );
+}
+
+function InfoCard({ icon: Icon, label, children, delay = 0 }: { icon: any; label: string; children: React.ReactNode; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="rounded-xl border border-border bg-card p-4 hover:shadow-card-hover transition-shadow duration-300"
+    >
+      <div className="flex items-center gap-2 text-muted-foreground mb-2">
+        <Icon className="h-4 w-4" /> <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+      </div>
+      {children}
+    </motion.div>
+  );
+}
 
 export default function OrdenDetallePage() {
   const { id } = useParams();
@@ -82,24 +111,19 @@ export default function OrdenDetallePage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <AppShell>
-        <div className="px-4 md:px-6 lg:px-8 py-6 max-w-4xl mx-auto space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-64 rounded-xl" />
-        </div>
-      </AppShell>
-    );
-  }
+  if (isLoading) return <AppShell><DetailSkeleton /></AppShell>;
 
   if (!order) {
     return (
       <AppShell>
-        <div className="px-4 md:px-6 lg:px-8 py-16 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="px-4 md:px-6 lg:px-8 py-16 text-center"
+        >
           <p className="text-muted-foreground">Orden no encontrada</p>
           <Button variant="outline" className="mt-4" onClick={() => navigate("/app/orders")}>Volver</Button>
-        </div>
+        </motion.div>
       </AppShell>
     );
   }
@@ -120,146 +144,173 @@ export default function OrdenDetallePage() {
             back="/app/orders"
             actions={
               canAdvance ? (
-                <Button onClick={advanceStatus} size="sm" className="gap-1.5 group">
+                <Button onClick={advanceStatus} size="sm" className="gap-1.5 group active:scale-95 transition-transform">
                   Avanzar estado <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                 </Button>
               ) : undefined
             }
           />
 
-          <div className="flex items-center gap-2">
+          <motion.div
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+            className="flex items-center gap-2"
+          >
             <StatusBadge status={order.status} size="md" />
             {Number(order.balance_due) > 0 && (
-              <span className="text-sm text-destructive font-medium">
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-sm text-destructive font-medium"
+              >
                 Saldo: {formatMoney(Number(order.balance_due))}
-              </span>
+              </motion.span>
             )}
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-            <StaggerGroup className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-4">
               {/* Client & Vehicle */}
-              <StaggerItem>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-border bg-card p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                      <User className="h-4 w-4" /> <span className="text-xs font-medium uppercase tracking-wide">Cliente</span>
-                    </div>
-                    <p className="text-sm font-semibold">{cust?.full_name || "Sin cliente"}</p>
-                    {cust?.phone && <p className="text-xs text-muted-foreground">{cust.phone}</p>}
-                  </div>
-                  <div className="rounded-xl border border-border bg-card p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                      <Car className="h-4 w-4" /> <span className="text-xs font-medium uppercase tracking-wide">Vehículo</span>
-                    </div>
-                    <p className="text-sm font-semibold">{veh?.make} {veh?.model} {veh?.year}</p>
-                    <p className="text-xs text-muted-foreground">Placa: {veh?.plate} · {veh?.color}</p>
-                  </div>
-                </div>
-              </StaggerItem>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <InfoCard icon={User} label="Cliente" delay={0.12}>
+                  <p className="text-sm font-semibold">{cust?.full_name || "Sin cliente"}</p>
+                  {cust?.phone && <p className="text-xs text-muted-foreground">{cust.phone}</p>}
+                </InfoCard>
+                <InfoCard icon={Car} label="Vehículo" delay={0.16}>
+                  <p className="text-sm font-semibold">{veh?.make} {veh?.model} {veh?.year}</p>
+                  <p className="text-xs text-muted-foreground">Placa: {veh?.plate} · {veh?.color}</p>
+                </InfoCard>
+              </div>
 
               {/* Problem */}
               {order.problem_description && (
-                <StaggerItem>
-                  <div className="rounded-xl border border-border bg-card p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                      <FileText className="h-4 w-4" /> <span className="text-xs font-medium uppercase tracking-wide">Problema</span>
+                <InfoCard icon={FileText} label="Problema" delay={0.2}>
+                  <p className="text-sm text-foreground">{order.problem_description}</p>
+                  {order.diagnosis && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Diagnóstico</p>
+                      <p className="text-sm text-foreground">{order.diagnosis}</p>
                     </div>
-                    <p className="text-sm text-foreground">{order.problem_description}</p>
-                    {order.diagnosis && (
-                      <div className="mt-3 pt-3 border-t border-border">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Diagnóstico</p>
-                        <p className="text-sm text-foreground">{order.diagnosis}</p>
-                      </div>
-                    )}
-                  </div>
-                </StaggerItem>
+                  )}
+                </InfoCard>
               )}
 
               {/* Items */}
-              <StaggerItem>
-                <div className="rounded-xl border border-border bg-card p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-3">
-                    <Wrench className="h-4 w-4" /> <span className="text-xs font-medium uppercase tracking-wide">Refacciones y mano de obra</span>
-                  </div>
-                  {parts.length === 0 && labor.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">Sin items registrados</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {parts.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground mb-2">Refacciones</p>
-                          {parts.map(item => (
-                            <div key={item.id} className="flex items-center justify-between py-1.5">
-                              <div className="min-w-0">
-                                <p className="text-sm">{item.name}</p>
-                                <p className="text-[11px] text-muted-foreground">{item.quantity} × {formatMoney(Number(item.unit_price))}</p>
-                              </div>
-                              <p className="text-sm font-medium">{formatMoney(Number(item.total_price))}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {labor.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground mb-2">Mano de obra</p>
-                          {labor.map(item => (
-                            <div key={item.id} className="flex items-center justify-between py-1.5">
+              <InfoCard icon={Wrench} label="Refacciones y mano de obra" delay={0.24}>
+                {parts.length === 0 && labor.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">Sin items registrados</p>
+                ) : (
+                  <div className="space-y-3">
+                    {parts.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Refacciones</p>
+                        {parts.map((item, idx) => (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.3 + idx * 0.04, duration: 0.25 }}
+                            className="flex items-center justify-between py-1.5"
+                          >
+                            <div className="min-w-0">
                               <p className="text-sm">{item.name}</p>
-                              <p className="text-sm font-medium">{formatMoney(Number(item.total_price))}</p>
+                              <p className="text-[11px] text-muted-foreground">{item.quantity} × {formatMoney(Number(item.unit_price))}</p>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="mt-4 pt-3 border-t border-border space-y-1.5">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Refacciones</span>
-                      <span>{formatMoney(Number(order.subtotal))}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Mano de obra</span>
-                      <span>{formatMoney(Number(order.labor_total))}</span>
-                    </div>
-                    <div className="flex justify-between text-sm font-bold pt-1 border-t border-border">
-                      <span>Total</span>
-                      <span>{formatMoney(Number(order.total))}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Pagado</span>
-                      <span className="text-success">{formatMoney(Number(order.paid_total))}</span>
-                    </div>
-                    {Number(order.balance_due) > 0 && (
-                      <div className="flex justify-between text-sm font-bold text-destructive">
-                        <span>Saldo pendiente</span>
-                        <span>{formatMoney(Number(order.balance_due))}</span>
+                            <p className="text-sm font-medium">{formatMoney(Number(item.total_price))}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                    {labor.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Mano de obra</p>
+                        {labor.map((item, idx) => (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.35 + idx * 0.04, duration: 0.25 }}
+                            className="flex items-center justify-between py-1.5"
+                          >
+                            <p className="text-sm">{item.name}</p>
+                            <p className="text-sm font-medium">{formatMoney(Number(item.total_price))}</p>
+                          </motion.div>
+                        ))}
                       </div>
                     )}
                   </div>
-                </div>
-              </StaggerItem>
+                )}
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.3 }}
+                  className="mt-4 pt-3 border-t border-border space-y-1.5"
+                >
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Refacciones</span>
+                    <span>{formatMoney(Number(order.subtotal))}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Mano de obra</span>
+                    <span>{formatMoney(Number(order.labor_total))}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-bold pt-1 border-t border-border">
+                    <span>Total</span>
+                    <span>{formatMoney(Number(order.total))}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Pagado</span>
+                    <span className="text-success">{formatMoney(Number(order.paid_total))}</span>
+                  </div>
+                  {Number(order.balance_due) > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5, duration: 0.3 }}
+                      className="flex justify-between text-sm font-bold text-destructive"
+                    >
+                      <span>Saldo pendiente</span>
+                      <span>{formatMoney(Number(order.balance_due))}</span>
+                    </motion.div>
+                  )}
+                </motion.div>
+              </InfoCard>
 
               {/* Notes */}
               {order.notes && (
-                <StaggerItem>
-                  <div className="rounded-xl border border-border bg-card p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                      <StickyNote className="h-4 w-4" /> <span className="text-xs font-medium uppercase tracking-wide">Notas</span>
-                    </div>
-                    <p className="text-sm text-foreground">{order.notes}</p>
-                  </div>
-                </StaggerItem>
+                <InfoCard icon={StickyNote} label="Notas" delay={0.28}>
+                  <p className="text-sm text-foreground">{order.notes}</p>
+                </InfoCard>
               )}
-            </StaggerGroup>
+            </div>
 
             {/* Timeline sidebar */}
             <div>
-              <div className="rounded-xl border border-border bg-card p-4 md:p-5 lg:sticky lg:top-20">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-xl border border-border bg-card p-4 md:p-5 lg:sticky lg:top-20"
+              >
                 <h3 className="font-display text-sm font-semibold mb-4">Timeline</h3>
                 <StatusTimeline events={events || []} currentStatus={order.status} />
-              </div>
+                {canAdvance && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    className="mt-4 pt-3 border-t border-border"
+                  >
+                    <Button onClick={advanceStatus} size="sm" className="w-full gap-1.5 group active:scale-95 transition-transform">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Avanzar estado
+                    </Button>
+                  </motion.div>
+                )}
+              </motion.div>
             </div>
           </div>
         </div>
