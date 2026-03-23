@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ShopProvider } from "@/hooks/useShop";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 import DashboardPage from "./app/DashboardPage";
 import OrdenesListPage from "./app/OrdenesListPage";
@@ -31,6 +32,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <ShopProvider>
+              <ScrollToTop />
               <Routes>
                 {/* Public */}
                 <Route path="/" element={<LandingPage />} />
