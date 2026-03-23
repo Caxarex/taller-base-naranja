@@ -9,11 +9,10 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { FilterChips } from "@/components/FilterChips";
 import { EmptyState } from "@/components/EmptyState";
 import { formatMoney } from "@/lib/format";
-import { PageTransition, StaggerGroup, StaggerItem } from "@/components/motion";
-import { Search, Plus, ClipboardList, Car } from "lucide-react";
+import { PageTransition, motion, AnimatePresence } from "@/components/motion";
+import { Search, Plus, ClipboardList, Car, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -27,6 +26,27 @@ const FILTERS = [
   { label: "Listo", value: "listo" },
   { label: "Entregado", value: "entregado" },
 ];
+
+function OrderSkeleton({ index }: { index: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: index * 0.05 }}
+      className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl border border-border bg-card animate-pulse"
+    >
+      <div className="h-11 w-11 rounded-lg bg-muted flex-shrink-0" />
+      <div className="flex-1 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-20 bg-muted rounded" />
+          <div className="h-4 w-16 bg-muted rounded-full" />
+        </div>
+        <div className="h-3 w-40 bg-muted rounded" />
+      </div>
+      <div className="h-4 w-16 bg-muted rounded hidden sm:block" />
+    </motion.div>
+  );
+}
 
 export default function OrdenesListPage() {
   const { currentShop } = useShop();
@@ -80,13 +100,18 @@ export default function OrdenesListPage() {
             title="Órdenes"
             subtitle={`${orders?.length || 0} órdenes en total`}
             actions={
-              <Button onClick={() => navigate("/app/orders/new")} size="sm" className="gap-1.5">
+              <Button onClick={() => navigate("/app/orders/new")} size="sm" className="gap-1.5 active:scale-95 transition-transform">
                 <Plus className="h-4 w-4" /> Nueva
               </Button>
             }
           />
 
-          <div className="relative">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.35 }}
+            className="relative"
+          >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={search}
@@ -94,64 +119,90 @@ export default function OrdenesListPage() {
               placeholder="Buscar por código, cliente o placa…"
               className="pl-9"
             />
-          </div>
+          </motion.div>
 
-          <FilterChips
-            options={FILTERS.map(f => ({ ...f, count: filterCounts[f.value] }))}
-            value={filter}
-            onChange={setFilter}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.35 }}
+          >
+            <FilterChips
+              options={FILTERS.map(f => ({ ...f, count: filterCounts[f.value] }))}
+              value={filter}
+              onChange={setFilter}
+            />
+          </motion.div>
 
           {isLoading ? (
-            <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
+            <div className="space-y-2">{[...Array(5)].map((_, i) => <OrderSkeleton key={i} index={i} />)}</div>
           ) : filtered.length === 0 ? (
-            <EmptyState
-              icon={ClipboardList}
-              title={search || filter !== "all" ? "Sin resultados" : "Sin órdenes"}
-              description={search || filter !== "all" ? "Intenta con otros filtros" : "Crea tu primera orden para empezar"}
-              actionLabel={!search && filter === "all" ? "Nueva orden" : undefined}
-              onAction={() => navigate("/app/orders/new")}
-            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <EmptyState
+                icon={ClipboardList}
+                title={search || filter !== "all" ? "Sin resultados" : "Sin órdenes"}
+                description={search || filter !== "all" ? "Intenta con otros filtros" : "Crea tu primera orden para empezar"}
+                actionLabel={!search && filter === "all" ? "Nueva orden" : undefined}
+                onAction={() => navigate("/app/orders/new")}
+              />
+            </motion.div>
           ) : (
-            <StaggerGroup className="space-y-2" fast>
-              {filtered.map(order => {
-                const cust = order.customers as unknown as { full_name: string } | null;
-                const veh = order.vehicles as unknown as { plate: string; make: string; model: string } | null;
-                return (
-                  <StaggerItem key={order.id}>
-                    <Link
-                      to={`/app/orders/${order.id}`}
-                      className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl border border-border bg-card hover:shadow-card-hover hover:-translate-y-px active:scale-[0.99] transition-all duration-200 group"
+            <AnimatePresence mode="popLayout">
+              <div className="space-y-2">
+                {filtered.map((order, idx) => {
+                  const cust = order.customers as unknown as { full_name: string } | null;
+                  const veh = order.vehicles as unknown as { plate: string; make: string; model: string } | null;
+                  return (
+                    <motion.div
+                      key={order.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      transition={{ delay: idx * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      layout
                     >
-                      <div className="h-11 w-11 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                        <Car className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-display text-sm font-bold">{order.public_code}</span>
-                          <StatusBadge status={order.status} />
+                      <Link
+                        to={`/app/orders/${order.id}`}
+                        className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl border border-border bg-card hover:shadow-card-hover hover:border-primary/20 hover:-translate-y-px active:scale-[0.995] transition-all duration-200 group"
+                      >
+                        <motion.div
+                          whileHover={{ scale: 1.08, rotate: -5 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                          className="h-11 w-11 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10 transition-colors duration-200"
+                        >
+                          <Car className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
+                        </motion.div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-display text-sm font-bold">{order.public_code}</span>
+                            <StatusBadge status={order.status} />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                            {cust?.full_name || "Sin cliente"} · {veh?.plate || "—"} · {veh?.make} {veh?.model}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 lg:hidden">
+                            {format(new Date(order.created_at), "d MMM yyyy", { locale: es })}
+                          </p>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {cust?.full_name || "Sin cliente"} · {veh?.plate || "—"} · {veh?.make} {veh?.model}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 lg:hidden">
-                          {format(new Date(order.created_at), "d MMM yyyy", { locale: es })}
-                        </p>
-                      </div>
-                      <div className="text-right flex-shrink-0 hidden sm:block">
-                        <p className="text-sm font-bold">{formatMoney(Number(order.total))}</p>
-                        {Number(order.balance_due) > 0 && (
-                          <p className="text-xs text-destructive">Saldo: {formatMoney(Number(order.balance_due))}</p>
-                        )}
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          {format(new Date(order.created_at), "d MMM yyyy", { locale: es })}
-                        </p>
-                      </div>
-                    </Link>
-                  </StaggerItem>
-                );
-              })}
-            </StaggerGroup>
+                        <div className="text-right flex-shrink-0 hidden sm:block">
+                          <p className="text-sm font-bold">{formatMoney(Number(order.total))}</p>
+                          {Number(order.balance_due) > 0 && (
+                            <p className="text-xs text-destructive">Saldo: {formatMoney(Number(order.balance_due))}</p>
+                          )}
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {format(new Date(order.created_at), "d MMM yyyy", { locale: es })}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-all duration-200 flex-shrink-0" />
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </AnimatePresence>
           )}
         </div>
       </PageTransition>
