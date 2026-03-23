@@ -1,32 +1,37 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AbonoModal } from "@/components/AbonoModal";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, CreditCard } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
+import { DollarSign, Calendar, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default function FioDetallePage() {
-  const { id } = useParams<{ id: string }>();
-  const [showAbono, setShowAbono] = useState(false);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [abonoOpen, setAbonoOpen] = useState(false);
 
-  const { data: fio, isLoading } = useQuery({
-    queryKey: ["fiado-detail", id],
+  const { data: fiado, isLoading } = useQuery({
+    queryKey: ["fiado", id],
     queryFn: async () => {
       const { data } = await supabase
         .from("fiados")
-        .select("*, customers(full_name), orders(public_code)")
+        .select("*, customers(full_name, phone)")
         .eq("id", id!)
-        .single();
+        .maybeSingle();
       return data;
     },
     enabled: !!id,
   });
 
-  const { data: payments = [] } = useQuery({
+  const { data: payments } = useQuery({
     queryKey: ["fiado-payments", id],
     queryFn: async () => {
       const { data } = await supabase
@@ -34,153 +39,94 @@ export default function FioDetallePage() {
         .select("*")
         .eq("fiado_id", id!)
         .order("payment_date", { ascending: false });
-      return data ?? [];
+      return data || [];
     },
     enabled: !!id,
   });
 
   if (isLoading) {
-    return (
-      <AppShell>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
-      </AppShell>
-    );
+    return <AppShell><div className="px-4 py-6 max-w-3xl mx-auto"><Skeleton className="h-8 w-48 mb-4" /><Skeleton className="h-64 rounded-xl" /></div></AppShell>;
   }
 
-  if (!fio) {
-    return (
-      <AppShell>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-muted-foreground">Fío no encontrado</p>
-        </div>
-      </AppShell>
-    );
+  if (!fiado) {
+    return <AppShell><div className="px-4 py-16 text-center"><p className="text-muted-foreground">Fío no encontrado</p><Button variant="outline" className="mt-4" onClick={() => navigate("/app/fiados")}>Volver</Button></div></AppShell>;
   }
 
-  const customer = fio.customers as unknown as { full_name: string } | null;
-  const order = fio.orders as unknown as { public_code: string } | null;
-  const progress = fio.total_amount > 0 ? (fio.paid_amount / fio.total_amount) * 100 : 0;
+  const cust = fiado.customers as unknown as { full_name: string; phone: string } | null;
+  const progress = fiado.total_amount > 0 ? (Number(fiado.paid_amount) / Number(fiado.total_amount)) * 100 : 0;
 
   return (
     <AppShell>
-      <div className="animate-fade-in">
-        <div className="px-4 md:px-6 lg:px-8 pt-4 lg:pt-8">
-          <Link
-            to="/app/fiados"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
-          >
-            <ArrowLeft className="h-4 w-4" /> Fíos
-          </Link>
-          <div className="flex items-center justify-between mb-6">
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 max-w-3xl mx-auto space-y-6">
+        <PageHeader
+          title={cust?.full_name || "Fío"}
+          back="/app/fiados"
+          actions={
+            fiado.status !== "pagado" ? (
+              <Button onClick={() => setAbonoOpen(true)} size="sm" className="gap-1.5">
+                <DollarSign className="h-4 w-4" /> Registrar abono
+              </Button>
+            ) : undefined
+          }
+        />
+
+        <StatusBadge status={fiado.status} size="md" />
+
+        {/* Summary */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+          <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <h1 className="font-display text-display-md text-foreground">
-                Fío de {customer?.full_name ?? "—"}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">Orden {order?.public_code ?? "—"}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="font-display text-lg font-bold mt-0.5">{formatMoney(Number(fiado.total_amount))}</p>
             </div>
-            <StatusBadge estado={fio.status} size="md" />
+            <div>
+              <p className="text-xs text-muted-foreground">Pagado</p>
+              <p className="font-display text-lg font-bold text-success mt-0.5">{formatMoney(Number(fiado.paid_amount))}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Saldo</p>
+              <p className="font-display text-lg font-bold text-destructive mt-0.5">{formatMoney(Number(fiado.balance_due))}</p>
+            </div>
+          </div>
+          <div className="w-full bg-muted rounded-full h-2">
+            <div className="bg-primary rounded-full h-2 transition-all" style={{ width: `${Math.min(progress, 100)}%` }} />
+          </div>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            {cust && <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" /> {cust.full_name}</span>}
+            {fiado.due_date && <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Vence: {format(new Date(fiado.due_date), "d MMM yyyy", { locale: es })}</span>}
           </div>
         </div>
 
-        <div className="px-4 md:px-6 lg:px-8 pb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 max-w-4xl">
-            <div className="lg:col-span-7 flex flex-col gap-4">
-              {/* Balance card */}
-              <div className={cn("rounded-xl border p-5", fio.status === "vencido" ? "border-destructive/30 bg-card" : "border-border bg-card")}>
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-muted-foreground">Saldo pendiente</p>
-                  <p className={cn("font-display text-metric-lg font-bold", fio.status === "vencido" ? "text-destructive" : "text-primary")}>
-                    {formatMoney(fio.balance_due)}
-                  </p>
-                </div>
-                <div className="mb-4">
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-muted-foreground">Progreso</span>
-                    <span className="font-semibold text-foreground">{Math.round(progress)}%</span>
-                  </div>
-                  <div className="h-3 rounded-full bg-elevated overflow-hidden">
-                    <div
-                      className={cn("h-full rounded-full transition-all duration-700", fio.status === "vencido" ? "bg-destructive" : "bg-primary")}
-                      style={{ width: `${Math.min(progress, 100)}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+        {/* Payments History */}
+        <div className="rounded-xl border border-border bg-card p-5">
+          <h3 className="font-display text-sm font-semibold mb-3">Historial de abonos</h3>
+          {!payments || payments.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">Sin abonos registrados</p>
+          ) : (
+            <div className="space-y-2">
+              {payments.map(p => (
+                <div key={p.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Monto original</p>
-                    <p className="text-sm font-semibold text-foreground">{formatMoney(fio.total_amount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Total abonado</p>
-                    <p className="text-sm font-semibold text-success">{formatMoney(fio.paid_amount)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Creación</p>
-                    <p className="text-sm font-medium text-foreground">{new Date(fio.created_at).toLocaleDateString("es-MX")}</p>
-                  </div>
-                </div>
-                <div className={cn("rounded-xl border p-4 flex items-center gap-3", fio.status === "vencido" ? "border-destructive/30 bg-destructive/5" : "border-border bg-card")}>
-                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Vencimiento</p>
-                    <p className={cn("text-sm font-medium", fio.status === "vencido" ? "text-destructive" : "text-foreground")}>
-                      {fio.due_date ?? "—"}
+                    <p className="text-sm font-medium text-success">+{formatMoney(Number(p.amount))}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {format(new Date(p.payment_date), "d MMM yyyy", { locale: es })}
+                      {p.method && ` · ${p.method}`}
                     </p>
                   </div>
+                  {p.note && <p className="text-xs text-muted-foreground max-w-[40%] truncate">{p.note}</p>}
                 </div>
-              </div>
-
-              <button
-                onClick={() => setShowAbono(true)}
-                className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]"
-              >
-                Registrar abono
-              </button>
+              ))}
             </div>
-
-            {/* Payments history */}
-            <div className="lg:col-span-5">
-              <div className="rounded-xl border border-border bg-card overflow-hidden lg:sticky lg:top-8">
-                <div className="px-4 py-3 border-b border-border-soft">
-                  <h2 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-muted-foreground" /> Historial de abonos
-                  </h2>
-                </div>
-                {payments.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <p className="text-sm text-muted-foreground">Sin abonos registrados</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border-soft">
-                    {payments.map((a) => (
-                      <div key={a.id} className="flex items-center justify-between px-4 py-3">
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{formatMoney(a.amount)}</p>
-                          <p className="text-xs text-muted-foreground">{a.payment_date}</p>
-                        </div>
-                        <span className="text-xs font-medium text-muted-foreground capitalize bg-elevated px-2 py-1 rounded-md">
-                          {a.method ?? "—"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-
-        <AbonoModal open={showAbono} onClose={() => setShowAbono(false)} fioId={fio.id} />
       </div>
+
+      <AbonoModal
+        open={abonoOpen}
+        onClose={() => setAbonoOpen(false)}
+        fiadoId={fiado.id}
+        balanceDue={Number(fiado.balance_due)}
+      />
     </AppShell>
   );
 }
