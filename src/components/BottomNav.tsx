@@ -1,7 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ClipboardList, HandCoins, PackageSearch, Sun, Moon } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, ClipboardList, HandCoins, PackageSearch, Sun, Moon, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./ThemeProvider";
+import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 
 const tabs = [
@@ -13,7 +14,14 @@ const tabs = [
 
 export function BottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-surface/95 backdrop-blur-xl lg:hidden safe-area-bottom">
@@ -50,6 +58,13 @@ export function BottomNav() {
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           <span>Tema</span>
         </motion.button>
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] font-medium text-muted-foreground rounded-lg transition-colors active:scale-95"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Salir</span>
+        </button>
       </div>
     </nav>
   );

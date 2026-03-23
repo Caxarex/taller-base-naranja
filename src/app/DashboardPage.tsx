@@ -152,7 +152,7 @@ export default function DashboardPage() {
             </motion.div>
           </div>
 
-          {/* Metrics Grid */}
+          {/* Metrics Grid — clickable */}
           {isLoading ? (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               {[...Array(4)].map((_, i) => <MetricSkeleton key={i} />)}
@@ -161,22 +161,30 @@ export default function DashboardPage() {
             <StaggerGroup className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               <StaggerItem>
                 <HoverCard>
-                  <MetricCard label="Ingresos" value={<AnimatedNumber value={totalRevenue} prefix="$" />} icon={TrendingUp} variant="hero" trend="Este período" />
+                  <button onClick={() => navigate("/app/orders")} className="w-full text-left">
+                    <MetricCard label="Ingresos" value={<AnimatedNumber value={totalRevenue} prefix="$" />} icon={TrendingUp} variant="hero" trend="Este período" />
+                  </button>
                 </HoverCard>
               </StaggerItem>
               <StaggerItem>
                 <HoverCard>
-                  <MetricCard label="Órdenes activas" value={<AnimatedNumber value={activeOrders.length} />} icon={ClipboardList} />
+                  <button onClick={() => navigate("/app/orders")} className="w-full text-left">
+                    <MetricCard label="Órdenes activas" value={<AnimatedNumber value={activeOrders.length} />} icon={ClipboardList} />
+                  </button>
                 </HoverCard>
               </StaggerItem>
               <StaggerItem>
                 <HoverCard>
-                  <MetricCard label="Fíos pendientes" value={<AnimatedNumber value={totalPending} prefix="$" />} icon={HandCoins} variant="warning" />
+                  <button onClick={() => navigate("/app/fiados")} className="w-full text-left">
+                    <MetricCard label="Fíos pendientes" value={<AnimatedNumber value={totalPending} prefix="$" />} icon={HandCoins} variant="warning" />
+                  </button>
                 </HoverCard>
               </StaggerItem>
               <StaggerItem>
                 <HoverCard>
-                  <MetricCard label="Stock bajo" value={<AnimatedNumber value={lowStock?.length || 0} />} icon={AlertTriangle} variant={lowStock && lowStock.length > 0 ? "danger" : "default"} />
+                  <button onClick={() => navigate("/app/inventory")} className="w-full text-left">
+                    <MetricCard label="Stock bajo" value={<AnimatedNumber value={lowStock?.length || 0} />} icon={AlertTriangle} variant={lowStock && lowStock.length > 0 ? "danger" : "default"} />
+                  </button>
                 </HoverCard>
               </StaggerItem>
             </StaggerGroup>
@@ -236,7 +244,7 @@ export default function DashboardPage() {
                                   <StatusBadge status={order.status} />
                                 </div>
                                 <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                  {cust?.full_name} · {veh?.plate} · {veh?.make} {veh?.model}
+                                  {cust?.full_name || "Sin cliente"} · {veh?.plate || "—"} · {veh?.make} {veh?.model}
                                 </p>
                               </div>
                               <div className="text-right flex-shrink-0 hidden sm:block">
@@ -417,8 +425,9 @@ export default function DashboardPage() {
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4 + idx * 0.06, duration: 0.3 }}
+                        onClick={() => navigate("/app/inventory")}
                         className={cn(
-                          "flex items-center justify-between py-2.5 px-2 rounded-lg -mx-2 transition-colors duration-200 hover:bg-elevated",
+                          "flex items-center justify-between py-2.5 px-2 rounded-lg -mx-2 transition-colors duration-200 hover:bg-elevated cursor-pointer",
                           (p.stock_qty ?? 0) === 0 && "bg-destructive/5"
                         )}
                       >
@@ -453,7 +462,7 @@ export default function DashboardPage() {
                   <h3 className="font-display text-sm font-semibold">Recordatorios</h3>
                 </div>
                 {!reminders || reminders.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sin recordatorios pendientes</p>
+                  <p className="text-sm text-muted-foreground py-3">Sin recordatorios pendientes</p>
                 ) : (
                   <div className="space-y-1">
                     {reminders.map((r, idx) => {

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { formatMoney, STATUS_ORDER } from "@/lib/format";
 import { PageTransition, motion } from "@/components/motion";
-import { Car, User, FileText, Wrench, DollarSign, StickyNote, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Car, User, FileText, Wrench, DollarSign, StickyNote, ArrowRight, CheckCircle2, ExternalLink, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -108,7 +108,15 @@ export default function OrdenDetallePage() {
       toast.success(`Estado cambiado a ${nextStatus.replace("_", " ")}`);
       qc.invalidateQueries({ queryKey: ["order", id] });
       qc.invalidateQueries({ queryKey: ["order-events", id] });
+      qc.invalidateQueries({ queryKey: ["dashboard-orders"] });
     }
+  };
+
+  const copyTrackingLink = () => {
+    if (!order) return;
+    const url = `${window.location.origin}/t/${order.public_code}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link de tracking copiado");
   };
 
   if (isLoading) return <AppShell><DetailSkeleton /></AppShell>;
@@ -143,11 +151,21 @@ export default function OrdenDetallePage() {
             title={order.public_code}
             back="/app/orders"
             actions={
-              canAdvance ? (
-                <Button onClick={advanceStatus} size="sm" className="gap-1.5 group active:scale-95 transition-transform">
-                  Avanzar estado <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copyTrackingLink}
+                  className="gap-1.5 active:scale-95 transition-transform"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Tracking
                 </Button>
-              ) : undefined
+                {canAdvance && (
+                  <Button onClick={advanceStatus} size="sm" className="gap-1.5 group active:scale-95 transition-transform">
+                    Avanzar estado <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                  </Button>
+                )}
+              </div>
             }
           />
 
@@ -155,7 +173,7 @@ export default function OrdenDetallePage() {
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1, duration: 0.3 }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-wrap"
           >
             <StatusBadge status={order.status} size="md" />
             {Number(order.balance_due) > 0 && (
@@ -168,6 +186,13 @@ export default function OrdenDetallePage() {
                 Saldo: {formatMoney(Number(order.balance_due))}
               </motion.span>
             )}
+            <Link
+              to={`/t/${order.public_code}`}
+              target="_blank"
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline ml-auto"
+            >
+              <ExternalLink className="h-3 w-3" /> Ver tracking público
+            </Link>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
@@ -179,8 +204,8 @@ export default function OrdenDetallePage() {
                   {cust?.phone && <p className="text-xs text-muted-foreground">{cust.phone}</p>}
                 </InfoCard>
                 <InfoCard icon={Car} label="Vehículo" delay={0.16}>
-                  <p className="text-sm font-semibold">{veh?.make} {veh?.model} {veh?.year}</p>
-                  <p className="text-xs text-muted-foreground">Placa: {veh?.plate} · {veh?.color}</p>
+                  <p className="text-sm font-semibold">{veh ? `${veh.make} ${veh.model} ${veh.year || ""}` : "Sin vehículo"}</p>
+                  {veh && <p className="text-xs text-muted-foreground">Placa: {veh.plate}{veh.color ? ` · ${veh.color}` : ""}</p>}
                 </InfoCard>
               </div>
 
