@@ -13,6 +13,7 @@ import OrdenDetallePage from "./app/OrdenDetallePage";
 import NuevaOrdenPage from "./app/NuevaOrdenPage";
 import FiosListPage from "./app/FiosListPage";
 import FioDetallePage from "./app/FioDetallePage";
+import InventoryPage from "./app/InventoryPage";
 import TrackingPage from "./app/TrackingPage";
 import LoginPage from "./app/auth/LoginPage";
 import RegisterPage from "./app/auth/RegisterPage";
@@ -31,29 +32,25 @@ const App = () => (
           <AuthProvider>
             <ShopProvider>
               <Routes>
-                {/* Public routes */}
+                {/* Public */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<RegisterPage />} />
                 <Route path="/tracking/:codigo" element={<TrackingPage />} />
+                <Route path="/t/:codigo" element={<TrackingPage />} />
 
-                {/* Onboarding (requires auth, no shop yet) */}
-                <Route
-                  path="/onboarding"
-                  element={
-                    <ProtectedRoute requireShop={false}>
-                      <SetupTallerPage />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Onboarding */}
+                <Route path="/onboarding" element={<ProtectedRoute requireShop={false}><SetupTallerPage /></ProtectedRoute>} />
 
-                {/* Protected routes (require auth + shop) */}
-                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-                <Route path="/ordenes" element={<ProtectedRoute><OrdenesListPage /></ProtectedRoute>} />
-                <Route path="/ordenes/nueva" element={<ProtectedRoute><NuevaOrdenPage /></ProtectedRoute>} />
-                <Route path="/ordenes/:id" element={<ProtectedRoute><OrdenDetallePage /></ProtectedRoute>} />
-                <Route path="/fios" element={<ProtectedRoute><FiosListPage /></ProtectedRoute>} />
-                <Route path="/fios/:id" element={<ProtectedRoute><FioDetallePage /></ProtectedRoute>} />
+                {/* App (protected) */}
+                <Route path="/app" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/app/orders" element={<ProtectedRoute><OrdenesListPage /></ProtectedRoute>} />
+                <Route path="/app/orders/new" element={<ProtectedRoute><NuevaOrdenPage /></ProtectedRoute>} />
+                <Route path="/app/orders/:id" element={<ProtectedRoute><OrdenDetallePage /></ProtectedRoute>} />
+                <Route path="/app/fiados" element={<ProtectedRoute><FiosListPage /></ProtectedRoute>} />
+                <Route path="/app/fiados/:id" element={<ProtectedRoute><FioDetallePage /></ProtectedRoute>} />
+                <Route path="/app/inventory" element={<ProtectedRoute><InventoryPage /></ProtectedRoute>} />
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ShopProvider>
