@@ -41,10 +41,11 @@ export function AbonoModal({ open, onClose, fioId }: AbonoModalProps) {
       toast.error("Error al registrar abono: " + error.message);
     } else {
       toast.success("Abono registrado correctamente");
-      queryClient.invalidateQueries({ queryKey: ["fiado-detail", fioId] });
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries({ queryKey: ["fiado", fioId] });
       queryClient.invalidateQueries({ queryKey: ["fiado-payments", fioId] });
       queryClient.invalidateQueries({ queryKey: ["fiados"] });
-      queryClient.invalidateQueries({ queryKey: ["fiados-list"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-fiados"] });
     }
 
     setSubmitting(false);

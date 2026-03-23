@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 import { STATUS_LABELS } from "@/lib/format";
 
@@ -23,15 +24,22 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-export function StatusBadge({ status, size = "sm", className }: StatusBadgeProps) {
-  return (
-    <span className={cn(
-      "inline-flex items-center rounded-full border font-medium whitespace-nowrap",
-      size === "sm" ? "px-2.5 py-0.5 text-[11px]" : "px-3 py-1 text-xs",
-      statusStyles[status] || "bg-muted text-muted-foreground border-border",
-      className
-    )}>
-      {STATUS_LABELS[status] || status}
-    </span>
-  );
-}
+export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(
+  ({ status, size = "sm", className }, ref) => {
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          "inline-flex items-center rounded-full border font-medium whitespace-nowrap",
+          size === "sm" ? "px-2.5 py-0.5 text-[11px]" : "px-3 py-1 text-xs",
+          statusStyles[status] || "bg-muted text-muted-foreground border-border",
+          className
+        )}
+      >
+        {STATUS_LABELS[status] || status}
+      </span>
+    );
+  }
+);
+
+StatusBadge.displayName = "StatusBadge";

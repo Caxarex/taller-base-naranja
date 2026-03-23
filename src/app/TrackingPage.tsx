@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +6,7 @@ import { StatusTimeline } from "@/components/StatusTimeline";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatMoney, STATUS_LABELS } from "@/lib/format";
 import { PageTransition, motion, AnimatePresence } from "@/components/motion";
-import { Wrench, Car, Search, Phone, CheckCircle2, PartyPopper, Clock } from "lucide-react";
+import { Wrench, Car, Search, Phone, CheckCircle2, PartyPopper, Clock, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -25,7 +25,7 @@ export default function TrackingPage() {
   const [searchCode, setSearchCode] = useState(codigo || "");
   const [activeCode, setActiveCode] = useState(codigo || "");
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["tracking", activeCode],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_public_tracking", { p_code: activeCode });
@@ -58,7 +58,7 @@ export default function TrackingPage() {
         className="border-b border-border bg-surface/90 backdrop-blur-xl sticky top-0 z-30"
       >
         <div className="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <motion.div
               whileHover={{ rotate: -12 }}
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
@@ -67,7 +67,7 @@ export default function TrackingPage() {
               <Wrench className="h-4 w-4 text-primary-foreground" />
             </motion.div>
             <span className="font-display text-lg font-bold">Tallio</span>
-          </div>
+          </Link>
           {shop?.phone && (
             <a href={`tel:${shop.phone}`} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95">
               <Phone className="h-4 w-4" /> Llamar
@@ -78,25 +78,32 @@ export default function TrackingPage() {
 
       <PageTransition>
         <div className="max-w-3xl mx-auto px-4 py-6 md:py-8 space-y-5">
-          {!codigo && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.35 }}
-              className="flex gap-2"
-            >
+          {/* Search bar — always visible */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.35 }}
+            className="space-y-2"
+          >
+            {!codigo && (
+              <div>
+                <h1 className="font-display text-display-md mb-1">Consulta tu orden</h1>
+                <p className="text-sm text-muted-foreground mb-3">Ingresa el código que te dio tu taller para ver el estado de tu vehículo.</p>
+              </div>
+            )}
+            <div className="flex gap-2">
               <Input
                 value={searchCode}
                 onChange={e => setSearchCode(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSearch()}
-                placeholder="Ingresa el código de tu orden…"
+                placeholder="Ej: ORD-A1B2C3"
                 className="flex-1"
               />
               <Button onClick={handleSearch} size="sm" className="gap-1.5 active:scale-95 transition-transform">
                 <Search className="h-4 w-4" /> Buscar
               </Button>
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
 
           {isLoading && <TrackingSkeleton />}
 
@@ -278,6 +285,16 @@ export default function TrackingPage() {
           </AnimatePresence>
         </div>
       </PageTransition>
+
+      {/* Footer */}
+      <footer className="border-t border-border py-6 mt-8">
+        <div className="max-w-3xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <Link to="/" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Wrench className="h-3.5 w-3.5" /> Tallio
+          </Link>
+          <p className="text-xs text-muted-foreground">Sistema de gestión para talleres mecánicos</p>
+        </div>
+      </footer>
     </div>
   );
 }
