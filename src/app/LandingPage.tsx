@@ -3,6 +3,9 @@ import { useTheme } from "@/components/ThemeProvider";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatMoney } from "@/lib/format";
 import {
+  ScrollReveal, StaggerGroup, StaggerItem, PageTransition, motion,
+} from "@/components/motion";
+import {
   Wrench, ArrowRight, ClipboardList, HandCoins, Package, Radio, Sun, Moon,
   AlertTriangle, BarChart3, Shield, Clock, Users, CheckCircle2, ChevronDown,
   Smartphone, TrendingUp, Eye, Bell, Zap, Car
@@ -16,7 +19,12 @@ import { cn } from "@/lib/utils";
 function NavBar() {
   const { theme, toggleTheme } = useTheme();
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-xl">
+    <motion.header
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-xl"
+    >
       <div className="max-w-6xl mx-auto px-4 md:px-6 flex items-center justify-between h-14">
         <Link to="/" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
@@ -25,14 +33,20 @@ function NavBar() {
           <span className="font-display text-lg font-bold">Tallio</span>
         </Link>
         <div className="flex items-center gap-2">
-          <button onClick={toggleTheme} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-elevated transition-colors" aria-label="Cambiar tema">
+          <motion.button
+            onClick={toggleTheme}
+            whileTap={{ scale: 0.9, rotate: 180 }}
+            transition={{ duration: 0.3 }}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-elevated transition-colors"
+            aria-label="Cambiar tema"
+          >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
+          </motion.button>
           <Link to="/auth/login"><Button variant="ghost" size="sm">Ingresar</Button></Link>
           <Link to="/auth/register"><Button size="sm">Crear taller</Button></Link>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }
 
@@ -46,7 +60,7 @@ function SectionTitle({ tag, title, desc, className }: { tag?: string; title: st
   );
 }
 
-/* Mock cards used in product preview section */
+/* Mock cards */
 function MockOrderCard() {
   return (
     <div className="rounded-xl border border-border bg-card p-4 space-y-2 shadow-card">
@@ -117,16 +131,25 @@ function MockTrackingCard() {
   );
 }
 
-/* ───── FAQ ───── */
+/* FAQ */
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-b border-border">
-      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full py-4 text-left">
-        <span className="text-sm font-semibold pr-4">{q}</span>
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform flex-shrink-0", open && "rotate-180")} />
+      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full py-4 text-left group">
+        <span className="text-sm font-semibold pr-4 group-hover:text-primary transition-colors">{q}</span>
+        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.25 }}>
+          <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        </motion.div>
       </button>
-      {open && <p className="text-sm text-muted-foreground pb-4 -mt-1">{a}</p>}
+      <motion.div
+        initial={false}
+        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="overflow-hidden"
+      >
+        <p className="text-sm text-muted-foreground pb-4">{a}</p>
+      </motion.div>
     </div>
   );
 }
@@ -141,29 +164,55 @@ export default function LandingPage() {
       <section className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 md:px-6 pt-16 pb-20 md:pt-24 md:pb-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-                <Zap className="h-3.5 w-3.5" /> Sistema para talleres mecánicos
+            <PageTransition>
+              <div className="space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1, duration: 0.4 }}
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold"
+                >
+                  <Zap className="h-3.5 w-3.5" /> Sistema para talleres mecánicos
+                </motion.div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold leading-[1.1]"
+                >
+                  El sistema operativo de tu taller
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-lg text-muted-foreground max-w-lg leading-relaxed"
+                >
+                  Órdenes, fíos, inventario y el estado del auto en un solo lugar. Menos vueltas. Más control.
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35, duration: 0.4 }}
+                  className="flex flex-wrap gap-3"
+                >
+                  <Link to="/auth/register">
+                    <Button size="lg" className="gap-2 group">
+                      Crear mi taller <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                    </Button>
+                  </Link>
+                  <Link to="/auth/login"><Button variant="outline" size="lg">Iniciar sesión</Button></Link>
+                </motion.div>
               </div>
-              <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold leading-[1.1]">
-                El sistema operativo de tu taller
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                Órdenes, fíos, inventario y el estado del auto en un solo lugar. Menos vueltas. Más control.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link to="/auth/register"><Button size="lg" className="gap-2">Crear mi taller <ArrowRight className="h-4 w-4" /></Button></Link>
-                <Link to="/auth/login"><Button variant="outline" size="lg">Iniciar sesión</Button></Link>
-              </div>
-            </div>
+            </PageTransition>
             {/* Mock dashboard preview */}
             <div className="hidden lg:block relative">
-              <div className="grid grid-cols-2 gap-3 max-w-sm ml-auto">
-                <MockMetricCard label="Ingresos" value="$12,810" icon={TrendingUp} accent />
-                <MockMetricCard label="Órdenes activas" value="4" icon={ClipboardList} />
-                <MockOrderCard />
-                <MockFiadoCard />
-              </div>
+              <StaggerGroup className="grid grid-cols-2 gap-3 max-w-sm ml-auto">
+                <StaggerItem><MockMetricCard label="Ingresos" value="$12,810" icon={TrendingUp} accent /></StaggerItem>
+                <StaggerItem><MockMetricCard label="Órdenes activas" value="4" icon={ClipboardList} /></StaggerItem>
+                <StaggerItem><MockOrderCard /></StaggerItem>
+                <StaggerItem><MockFiadoCard /></StaggerItem>
+              </StaggerGroup>
             </div>
           </div>
         </div>
@@ -174,54 +223,58 @@ export default function LandingPage() {
       {/* ══════ 2. PROBLEMA ══════ */}
       <section className="border-t border-border bg-surface py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
-          <SectionTitle tag="El problema" title="Tu taller funciona, pero ¿a qué costo?" desc="Cobras con memoria, apuntas en libretas, y tus clientes te mandan WhatsApp preguntando '¿ya está mi carro?'. No es sostenible." className="mb-10" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ScrollReveal><SectionTitle tag="El problema" title="Tu taller funciona, pero ¿a qué costo?" desc="Cobras con memoria, apuntas en libretas, y tus clientes te mandan WhatsApp preguntando '¿ya está mi carro?'. No es sostenible." className="mb-10" /></ScrollReveal>
+          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { icon: HandCoins, title: "Fíos olvidados", desc: "Saldos que se pierden porque nadie los registra ni los cobra a tiempo." },
               { icon: Smartphone, title: "WhatsApp interminable", desc: "Clientes preguntando status cada hora. Pierdes tiempo contestando lo mismo." },
               { icon: Package, title: "Inventario en la cabeza", desc: "No sabes qué tienes en stock hasta que lo necesitas y ya no hay." },
               { icon: AlertTriangle, title: "Desorden operativo", desc: "Papelitos, libretas y memoria. Un día se pierde algo importante." },
             ].map(item => (
-              <div key={item.title} className="rounded-xl border border-border bg-card p-5 hover:shadow-card-hover transition-shadow">
-                <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
-                  <item.icon className="h-5 w-5 text-destructive" />
+              <StaggerItem key={item.title}>
+                <div className="rounded-xl border border-border bg-card p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+                  <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
+                    <item.icon className="h-5 w-5 text-destructive" />
+                  </div>
+                  <h3 className="font-display text-sm font-semibold mb-1">{item.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
                 </div>
-                <h3 className="font-display text-sm font-semibold mb-1">{item.title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* ══════ 3. SOLUCIÓN ══════ */}
       <section className="py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
-          <SectionTitle tag="La solución" title="Tallio organiza todo lo que tu taller necesita" desc="Un sistema simple, moderno y hecho para talleres reales. No necesitas ser experto en tecnología." className="mb-10" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <ScrollReveal><SectionTitle tag="La solución" title="Tallio organiza todo lo que tu taller necesita" desc="Un sistema simple, moderno y hecho para talleres reales. No necesitas ser experto en tecnología." className="mb-10" /></ScrollReveal>
+          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { icon: ClipboardList, title: "Órdenes", desc: "Registra, da seguimiento y avanza cada orden con un timeline visual. Del recibido al entregado.", color: "bg-info/10 text-info" },
               { icon: HandCoins, title: "Fíos", desc: "Cartera de créditos viva. Saldos, vencimientos, abonos y urgencia. Cobra lo que te deben.", color: "bg-warning/10 text-warning" },
               { icon: Package, title: "Inventario", desc: "Productos, stock actual, mínimos y alertas de reabastecimiento. Sin sorpresas.", color: "bg-success/10 text-success" },
               { icon: Radio, title: "Tracking público", desc: "Tu cliente consulta el estado de su auto desde el celular. Sin llamadas ni WhatsApp.", color: "bg-primary/10 text-primary" },
             ].map(item => (
-              <div key={item.title} className="rounded-xl border border-border bg-card p-6 hover:shadow-card-hover transition-shadow">
-                <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center mb-4", item.color)}>
-                  <item.icon className="h-5 w-5" />
+              <StaggerItem key={item.title}>
+                <div className="rounded-xl border border-border bg-card p-6 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 group">
+                  <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform", item.color)}>
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-display text-display-sm mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                 </div>
-                <h3 className="font-display text-display-sm mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* ══════ 4. FEATURES ══════ */}
       <section className="border-t border-border bg-surface py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
-          <SectionTitle tag="Funcionalidades" title="Todo lo que necesitas, nada que te sobre" className="mb-10" />
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <ScrollReveal><SectionTitle tag="Funcionalidades" title="Todo lo que necesitas, nada que te sobre" className="mb-10" /></ScrollReveal>
+          <StaggerGroup className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
               { icon: BarChart3, label: "Dashboard del dueño" },
               { icon: ClipboardList, label: "Lista de órdenes" },
@@ -233,49 +286,53 @@ export default function LandingPage() {
               { icon: Bell, label: "Recordatorios" },
               { icon: Users, label: "Multi-usuario" },
             ].map(f => (
-              <div key={f.label} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:shadow-card-hover transition-shadow">
-                <f.icon className="h-5 w-5 text-primary flex-shrink-0" />
-                <span className="text-sm font-medium">{f.label}</span>
-              </div>
+              <StaggerItem key={f.label}>
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:shadow-card-hover hover:border-primary/20 transition-all duration-200 group">
+                  <f.icon className="h-5 w-5 text-primary flex-shrink-0 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">{f.label}</span>
+                </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* ══════ 5. CÓMO FUNCIONA ══════ */}
       <section className="py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
-          <SectionTitle tag="Cómo funciona" title="Empieza en minutos, no en semanas" className="mb-10" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ScrollReveal><SectionTitle tag="Cómo funciona" title="Empieza en minutos, no en semanas" className="mb-10" /></ScrollReveal>
+          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { step: "1", title: "Te registras", desc: "Crea tu cuenta con correo y contraseña." },
               { step: "2", title: "Creas tu taller", desc: "Ponle nombre y listo. Se carga con datos de ejemplo." },
               { step: "3", title: "Registras órdenes", desc: "Cliente, vehículo, problema. En 3 pasos." },
               { step: "4", title: "Tallio organiza", desc: "Timeline, fíos, inventario y tracking. Todo automático." },
             ].map(s => (
-              <div key={s.step} className="rounded-xl border border-border bg-card p-5">
-                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                  <span className="font-display text-sm font-bold text-primary">{s.step}</span>
+              <StaggerItem key={s.step}>
+                <div className="rounded-xl border border-border bg-card p-5 hover:shadow-card-hover transition-shadow">
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                    <span className="font-display text-sm font-bold text-primary">{s.step}</span>
+                  </div>
+                  <h3 className="font-display text-sm font-semibold mb-1">{s.title}</h3>
+                  <p className="text-xs text-muted-foreground">{s.desc}</p>
                 </div>
-                <h3 className="font-display text-sm font-semibold mb-1">{s.title}</h3>
-                <p className="text-xs text-muted-foreground">{s.desc}</p>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* ══════ 6. PRODUCT PREVIEW ══════ */}
       <section className="border-t border-border bg-surface py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
-          <SectionTitle tag="Vista previa" title="Así se ve Tallio por dentro" desc="Interfaces reales, datos reales, diseño pensado para el trabajo diario del taller." className="mb-10" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-3">
+          <ScrollReveal><SectionTitle tag="Vista previa" title="Así se ve Tallio por dentro" desc="Interfaces reales, datos reales, diseño pensado para el trabajo diario del taller." className="mb-10" /></ScrollReveal>
+          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StaggerItem className="space-y-3">
               <MockMetricCard label="Ingresos del mes" value="$28,640" icon={TrendingUp} accent />
               <MockMetricCard label="Órdenes activas" value="4" icon={ClipboardList} />
               <MockMetricCard label="Fíos pendientes" value="$4,020" icon={HandCoins} />
-            </div>
-            <div className="space-y-3">
+            </StaggerItem>
+            <StaggerItem className="space-y-3">
               <MockOrderCard />
               <div className="rounded-xl border border-border bg-card p-4 shadow-card">
                 <div className="flex items-center justify-between mb-2">
@@ -296,12 +353,12 @@ export default function LandingPage() {
                   <span className="font-semibold">{formatMoney(11200)}</span>
                 </div>
               </div>
-            </div>
-            <div className="space-y-3">
+            </StaggerItem>
+            <StaggerItem className="space-y-3">
               <MockTrackingCard />
               <MockFiadoCard />
-            </div>
-          </div>
+            </StaggerItem>
+          </StaggerGroup>
         </div>
       </section>
 
@@ -309,28 +366,30 @@ export default function LandingPage() {
       <section className="py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div>
+            <ScrollReveal>
               <SectionTitle tag="Órdenes" title="Cada auto tiene su historia" desc="Registra el problema, diagnóstico, refacciones y mano de obra. Avanza el estado con un clic. Tu cliente ve el progreso en tiempo real." />
               <ul className="mt-6 space-y-2">
                 {["Timeline visual de cada orden", "Refacciones + mano de obra desglosados", "Saldo pendiente claro", "Código de tracking para el cliente"].map(t => (
                   <li key={t} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />{t}</li>
                 ))}
               </ul>
-            </div>
-            <div className="space-y-3 max-w-sm ml-auto">
-              <MockOrderCard />
-              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
-                <p className="text-xs text-muted-foreground mb-2">Timeline</p>
-                <div className="space-y-2">
-                  {["Recibido", "Diagnóstico", "Cotizado", "Aprobado", "En reparación"].map((s, i) => (
-                    <div key={s} className="flex items-center gap-2">
-                      <CheckCircle2 className={cn("h-4 w-4", i < 4 ? "text-success" : "text-primary")} />
-                      <span className="text-xs">{s}</span>
-                    </div>
-                  ))}
+            </ScrollReveal>
+            <ScrollReveal delay={0.15}>
+              <div className="space-y-3 max-w-sm ml-auto">
+                <MockOrderCard />
+                <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+                  <p className="text-xs text-muted-foreground mb-2">Timeline</p>
+                  <div className="space-y-2">
+                    {["Recibido", "Diagnóstico", "Cotizado", "Aprobado", "En reparación"].map((s, i) => (
+                      <div key={s} className="flex items-center gap-2">
+                        <CheckCircle2 className={cn("h-4 w-4", i < 4 ? "text-success" : "text-primary")} />
+                        <span className="text-xs">{s}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -339,30 +398,34 @@ export default function LandingPage() {
       <section className="border-t border-border bg-surface py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div className="order-2 lg:order-1 space-y-3 max-w-sm">
-              <MockFiadoCard />
-              <div className="rounded-xl border border-warning/20 bg-warning/5 p-4 shadow-card">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold">José Ramírez</span>
-                  <StatusBadge status="por_vencer" />
-                </div>
-                <div className="w-full bg-muted rounded-full h-1.5 mb-1.5">
-                  <div className="bg-primary rounded-full h-1.5" style={{ width: "41%" }} />
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">{formatMoney(1000)} de {formatMoney(2450)}</span>
-                  <span className="font-bold text-warning">{formatMoney(1450)}</span>
+            <ScrollReveal delay={0.1}>
+              <div className="order-2 lg:order-1 space-y-3 max-w-sm">
+                <MockFiadoCard />
+                <div className="rounded-xl border border-warning/20 bg-warning/5 p-4 shadow-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold">José Ramírez</span>
+                    <StatusBadge status="por_vencer" />
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-1.5 mb-1.5">
+                    <div className="bg-primary rounded-full h-1.5" style={{ width: "41%" }} />
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">{formatMoney(1000)} de {formatMoney(2450)}</span>
+                    <span className="font-bold text-warning">{formatMoney(1450)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="order-1 lg:order-2">
-              <SectionTitle tag="Fíos" title="Deja de cobrar con memoria" desc="Cartera de créditos viva con saldos, vencimientos, abonos y urgencia visual. Sabes exactamente quién te debe, cuánto y desde cuándo." />
-              <ul className="mt-6 space-y-2">
-                {["Buckets: pendiente, por vencer, vencido", "Barra de progreso de pagos", "Historial de abonos", "Urgencia visual controlada"].map(t => (
-                  <li key={t} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />{t}</li>
-                ))}
-              </ul>
-            </div>
+            </ScrollReveal>
+            <ScrollReveal>
+              <div className="order-1 lg:order-2">
+                <SectionTitle tag="Fíos" title="Deja de cobrar con memoria" desc="Cartera de créditos viva con saldos, vencimientos, abonos y urgencia visual. Sabes exactamente quién te debe, cuánto y desde cuándo." />
+                <ul className="mt-6 space-y-2">
+                  {["Buckets: pendiente, por vencer, vencido", "Barra de progreso de pagos", "Historial de abonos", "Urgencia visual controlada"].map(t => (
+                    <li key={t} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />{t}</li>
+                  ))}
+                </ul>
+              </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -371,17 +434,19 @@ export default function LandingPage() {
       <section className="py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div>
+            <ScrollReveal>
               <SectionTitle tag="Tracking público" title="Tu cliente sabe el estado de su auto" desc="Sin login, sin llamadas, sin WhatsApp. Le das un código y consulta el progreso desde su celular." />
               <ul className="mt-6 space-y-2">
                 {["Sin login requerido", "Timeline de progreso visual", "Resumen económico claro", "Diseño premium y confiable"].map(t => (
                   <li key={t} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />{t}</li>
                 ))}
               </ul>
-            </div>
-            <div className="max-w-sm ml-auto">
-              <MockTrackingCard />
-            </div>
+            </ScrollReveal>
+            <ScrollReveal delay={0.15}>
+              <div className="max-w-sm ml-auto">
+                <MockTrackingCard />
+              </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -390,27 +455,31 @@ export default function LandingPage() {
       <section className="border-t border-border bg-surface py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div className="space-y-2 max-w-sm order-2 lg:order-1">
-              {[
-                { name: "Disco de freno ventilado", sku: "DIS-001", stock: 0, min: 2, danger: true },
-                { name: "Banda serpentina", sku: "BAN-001", stock: 1, min: 2, danger: true },
-                { name: "Balatas cerámicas", sku: "BAL-001", stock: 2, min: 3, danger: true },
-              ].map(p => (
-                <div key={p.sku} className={cn("flex items-center justify-between p-3 rounded-xl border", p.danger ? "border-destructive/30 bg-destructive/5" : "border-border bg-card")}>
-                  <div>
-                    <p className="text-sm font-medium">{p.name}</p>
-                    <p className="text-[11px] text-muted-foreground">{p.sku}</p>
+            <ScrollReveal delay={0.1}>
+              <div className="space-y-2 max-w-sm order-2 lg:order-1">
+                {[
+                  { name: "Disco de freno ventilado", sku: "DIS-001", stock: 0, min: 2 },
+                  { name: "Banda serpentina", sku: "BAN-001", stock: 1, min: 2 },
+                  { name: "Balatas cerámicas", sku: "BAL-001", stock: 2, min: 3 },
+                ].map(p => (
+                  <div key={p.sku} className="flex items-center justify-between p-3 rounded-xl border border-destructive/30 bg-destructive/5">
+                    <div>
+                      <p className="text-sm font-medium">{p.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{p.sku}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={cn("text-sm font-bold", p.stock === 0 ? "text-destructive" : "text-warning")}>{p.stock}</span>
+                      <span className="text-[11px] text-muted-foreground"> / {p.min}</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className={cn("text-sm font-bold", p.stock === 0 ? "text-destructive" : "text-warning")}>{p.stock}</span>
-                    <span className="text-[11px] text-muted-foreground"> / {p.min}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="order-1 lg:order-2">
-              <SectionTitle tag="Inventario" title="Sabe qué tienes antes de que te haga falta" desc="Stock actual, mínimos y alertas de reabastecimiento. Nunca te quedes sin una refacción en medio de un trabajo." />
-            </div>
+                ))}
+              </div>
+            </ScrollReveal>
+            <ScrollReveal>
+              <div className="order-1 lg:order-2">
+                <SectionTitle tag="Inventario" title="Sabe qué tienes antes de que te haga falta" desc="Stock actual, mínimos y alertas de reabastecimiento. Nunca te quedes sin una refacción en medio de un trabajo." />
+              </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -418,72 +487,84 @@ export default function LandingPage() {
       {/* ══════ 11. BENEFICIOS ══════ */}
       <section className="py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
-          <SectionTitle tag="Beneficios" title="Menos vueltas. Más control." className="text-center mx-auto mb-10" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <ScrollReveal><SectionTitle tag="Beneficios" title="Menos vueltas. Más control." className="text-center mx-auto mb-10" /></ScrollReveal>
+          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { icon: Clock, title: "Ahorra tiempo", desc: "Deja de buscar papelitos. Todo está en un solo lugar." },
               { icon: TrendingUp, title: "Cobra más", desc: "Los fíos no se olvidan. Las alertas te avisan antes de que venzan." },
               { icon: Shield, title: "Profesionaliza", desc: "Tu cliente ve un tracking premium. Tu taller se ve serio." },
             ].map(b => (
-              <div key={b.title} className="rounded-xl border border-border bg-card p-6 text-center hover:shadow-card-hover transition-shadow">
-                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <b.icon className="h-6 w-6 text-primary" />
+              <StaggerItem key={b.title}>
+                <div className="rounded-xl border border-border bg-card p-6 text-center hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 group">
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <b.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-display text-display-sm mb-2">{b.title}</h3>
+                  <p className="text-sm text-muted-foreground">{b.desc}</p>
                 </div>
-                <h3 className="font-display text-display-sm mb-2">{b.title}</h3>
-                <p className="text-sm text-muted-foreground">{b.desc}</p>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* ══════ 12. PARA QUIÉN ══════ */}
       <section className="border-t border-border bg-surface py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
-          <SectionTitle tag="¿Para quién es?" title="Hecho para talleres de todos los tamaños" className="text-center mx-auto mb-10" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <ScrollReveal><SectionTitle tag="¿Para quién es?" title="Hecho para talleres de todos los tamaños" className="text-center mx-auto mb-10" /></ScrollReveal>
+          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { title: "Taller chico", desc: "1-3 mecánicos. Necesitas orden básica sin complicaciones." },
               { title: "Taller mediano", desc: "4-10 personas. Necesitas control de fíos, inventario y equipo." },
               { title: "Multi-sucursal", desc: "Varios puntos. Necesitas visibilidad centralizada (próximamente)." },
             ].map(t => (
-              <div key={t.title} className="rounded-xl border border-border bg-card p-5">
-                <h3 className="font-display text-sm font-semibold mb-1">{t.title}</h3>
-                <p className="text-xs text-muted-foreground">{t.desc}</p>
-              </div>
+              <StaggerItem key={t.title}>
+                <div className="rounded-xl border border-border bg-card p-5 hover:shadow-card-hover transition-shadow">
+                  <h3 className="font-display text-sm font-semibold mb-1">{t.title}</h3>
+                  <p className="text-xs text-muted-foreground">{t.desc}</p>
+                </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* ══════ 13. FAQ ══════ */}
-      <section className="py-16 md:py-24">
-        <div className="max-w-3xl mx-auto px-4 md:px-6">
-          <SectionTitle tag="Preguntas frecuentes" title="¿Tienes dudas?" className="mb-8" />
-          <div>
-            <FAQItem q="¿Necesito instalar algo?" a="No. Tallio es una aplicación web. Funciona desde el navegador de tu celular, tablet o computadora." />
-            <FAQItem q="¿Mis datos están seguros?" a="Sí. Usamos infraestructura en la nube con cifrado y respaldos automáticos." />
-            <FAQItem q="¿Cuánto cuesta?" a="Estamos en fase beta. Por ahora puedes crear tu taller gratis." />
-            <FAQItem q="¿Puedo usar Tallio desde el celular?" a="Sí. Está diseñado mobile-first. Se ve y funciona excelente en cualquier pantalla." />
-            <FAQItem q="¿Mi cliente necesita crear cuenta?" a="No. El tracking público funciona con un código, sin registro ni login." />
-            <FAQItem q="¿Puedo agregar mecánicos y recepcionistas?" a="Sí. Puedes invitar miembros a tu taller con distintos roles y permisos." />
+      <ScrollReveal>
+        <section className="py-16 md:py-24">
+          <div className="max-w-3xl mx-auto px-4 md:px-6">
+            <SectionTitle tag="Preguntas frecuentes" title="¿Tienes dudas?" className="mb-8" />
+            <div>
+              <FAQItem q="¿Necesito instalar algo?" a="No. Tallio es una aplicación web. Funciona desde el navegador de tu celular, tablet o computadora." />
+              <FAQItem q="¿Mis datos están seguros?" a="Sí. Usamos infraestructura en la nube con cifrado y respaldos automáticos." />
+              <FAQItem q="¿Cuánto cuesta?" a="Estamos en fase beta. Por ahora puedes crear tu taller gratis." />
+              <FAQItem q="¿Puedo usar Tallio desde el celular?" a="Sí. Está diseñado mobile-first. Se ve y funciona excelente en cualquier pantalla." />
+              <FAQItem q="¿Mi cliente necesita crear cuenta?" a="No. El tracking público funciona con un código, sin registro ni login." />
+              <FAQItem q="¿Puedo agregar mecánicos y recepcionistas?" a="Sí. Puedes invitar miembros a tu taller con distintos roles y permisos." />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </ScrollReveal>
 
       {/* ══════ 14. CTA FINAL ══════ */}
-      <section className="border-t border-border bg-gradient-to-b from-surface to-canvas py-20 md:py-28">
-        <div className="max-w-3xl mx-auto px-4 md:px-6 text-center space-y-6">
-          <h2 className="font-display text-display-lg md:text-display-xl">¿Listo para organizar tu taller?</h2>
-          <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Empieza gratis. Configura tu taller en minutos. Sin tarjeta de crédito.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/auth/register"><Button size="lg" className="gap-2">Crear mi taller <ArrowRight className="h-4 w-4" /></Button></Link>
-            <Link to="/auth/login"><Button variant="outline" size="lg">Iniciar sesión</Button></Link>
+      <ScrollReveal>
+        <section className="border-t border-border bg-gradient-to-b from-surface to-canvas py-20 md:py-28">
+          <div className="max-w-3xl mx-auto px-4 md:px-6 text-center space-y-6">
+            <h2 className="font-display text-display-lg md:text-display-xl">¿Listo para organizar tu taller?</h2>
+            <p className="text-lg text-muted-foreground max-w-md mx-auto">
+              Empieza gratis. Configura tu taller en minutos. Sin tarjeta de crédito.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link to="/auth/register">
+                <Button size="lg" className="gap-2 group">
+                  Crear mi taller <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                </Button>
+              </Link>
+              <Link to="/auth/login"><Button variant="outline" size="lg">Iniciar sesión</Button></Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </ScrollReveal>
 
       {/* ══════ FOOTER ══════ */}
       <footer className="border-t border-border bg-surface py-8">

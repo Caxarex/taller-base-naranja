@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, ClipboardList, HandCoins, PackageSearch, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./ThemeProvider";
+import { motion } from "framer-motion";
 
 const tabs = [
   { to: "/app", icon: LayoutDashboard, label: "Inicio" },
@@ -24,22 +25,31 @@ export function BottomNav() {
               key={to}
               to={to}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] font-medium transition-colors rounded-lg",
-                active ? "text-primary" : "text-muted-foreground active:text-foreground"
+                "relative flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] font-medium transition-colors rounded-lg active:scale-95",
+                active ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <Icon className={cn("h-5 w-5", active && "drop-shadow-sm")} />
+              <Icon className="h-5 w-5" />
               <span>{label}</span>
+              {active && (
+                <motion.div
+                  layoutId="bottomNavIndicator"
+                  className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-primary"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
             </Link>
           );
         })}
-        <button
+        <motion.button
           onClick={toggleTheme}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] font-medium text-muted-foreground active:text-foreground rounded-lg transition-colors"
+          whileTap={{ scale: 0.85, rotate: 180 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] font-medium text-muted-foreground rounded-lg transition-colors"
         >
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           <span>Tema</span>
-        </button>
+        </motion.button>
       </div>
     </nav>
   );
