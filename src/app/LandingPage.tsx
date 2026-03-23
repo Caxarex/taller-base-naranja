@@ -188,7 +188,7 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
-              <Link to="/dashboard">
+              <Link to="/app">
                 <Button size="sm">Ir al panel</Button>
               </Link>
             ) : (

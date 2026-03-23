@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Wrench } from "lucide-react";
+import { seedDemoData } from "@/lib/seedDemoData";
 
 export default function SetupTallerPage() {
   const { user, loading: authLoading } = useAuth();
@@ -20,7 +21,7 @@ export default function SetupTallerPage() {
 
   if (authLoading || shopLoading) return null;
   if (!user) return <Navigate to="/auth/login" replace />;
-  if (hasShop) return <Navigate to="/" replace />;
+  if (hasShop) return <Navigate to="/app" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +31,6 @@ export default function SetupTallerPage() {
     }
     setSubmitting(true);
 
-    // Generate slug from name
     const slug = name
       .toLowerCase()
       .normalize("NFD")
@@ -39,7 +39,6 @@ export default function SetupTallerPage() {
       .replace(/^-|-$/g, "")
       + "-" + Date.now().toString(36);
 
-    // Create shop
     const { data: shop, error: shopError } = await supabase
       .from("shops")
       .insert({ name: name.trim(), slug, phone: phone.trim() || null, city: city.trim() || null, created_by: user.id })
@@ -52,7 +51,6 @@ export default function SetupTallerPage() {
       return;
     }
 
-    // Create owner membership
     const { error: memberError } = await supabase
       .from("shop_members")
       .insert({ shop_id: shop.id, user_id: user.id, role: "owner", status: "active" });
@@ -63,9 +61,11 @@ export default function SetupTallerPage() {
       return;
     }
 
-    toast.success("¡Taller creado! Bienvenido a Tallio.");
-    // Force reload to refresh shop context
-    window.location.href = "/";
+    // Seed demo data
+    await seedDemoData(shop.id);
+
+    toast.success("¡Taller creado con datos de ejemplo! Bienvenido a Tallio.");
+    window.location.href = "/app";
   };
 
   return (
