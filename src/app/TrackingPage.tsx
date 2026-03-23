@@ -61,10 +61,11 @@ export default function TrackingPage() {
 
     const fetch = async () => {
       const { data: result, error } = await supabase.rpc("get_public_tracking", { p_code: codigo });
-      if (error || !result || !(result as TrackingData)?.order) {
+      const parsed = result as unknown as TrackingData;
+      if (error || !parsed?.order) {
         setNotFound(true);
       } else {
-        setData(result as TrackingData);
+        setData(parsed);
       }
       setLoading(false);
     };
