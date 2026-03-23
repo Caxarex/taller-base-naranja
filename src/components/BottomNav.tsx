@@ -17,7 +17,7 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-surface/95 backdrop-blur-xl lg:hidden safe-area-bottom">
       <div className="mx-auto flex max-w-lg items-center justify-around py-1.5">
         {tabs.map(({ to, icon: Icon, label }) => {
-          const active = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+          const active = to === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(to);
           return (
             <Link
               key={to}

@@ -25,7 +25,7 @@ export function SidebarNav() {
       {/* Nav items */}
       <nav className="flex flex-1 flex-col items-center gap-1 pt-4">
         {navItems.map(({ to, icon: Icon, label }) => {
-          const active = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+          const active = to === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(to);
           return (
             <Link
               key={to}
