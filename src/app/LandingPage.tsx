@@ -170,23 +170,26 @@ function MockOrderCard({ code = "ORD-0042", status = "en_reparacion", name = "Ma
   );
 }
 
-function MockFiadoCard({ name = "Carlos Hernández", status = "vencido", balance = 600, progress = 0, borderColor = "border-destructive/20 bg-destructive/5", textColor = "text-destructive" }) {
-  return (
-    <div className={cn("rounded-xl border p-4 shadow-card", borderColor)}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-semibold">{name}</span>
-        <StatusBadge status={status} />
+const MockFiadoCard = React.forwardRef<HTMLDivElement, { name?: string; status?: string; balance?: number; progress?: number; borderColor?: string; textColor?: string }>(
+  ({ name = "Carlos Hernández", status = "vencido", balance = 600, progress = 0, borderColor = "border-destructive/20 bg-destructive/5", textColor = "text-destructive" }, ref) => {
+    return (
+      <div ref={ref} className={cn("rounded-xl border p-4 shadow-card", borderColor)}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold">{name}</span>
+          <StatusBadge status={status} />
+        </div>
+        <div className="w-full bg-muted rounded-full h-1.5 mb-1.5">
+          <AnimatedProgress value={progress} className="bg-primary rounded-full h-1.5" />
+        </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">Saldo</span>
+          <span className={cn("font-bold", textColor)}>{formatMoney(balance)}</span>
+        </div>
       </div>
-      <div className="w-full bg-muted rounded-full h-1.5 mb-1.5">
-        <AnimatedProgress value={progress} className="bg-primary rounded-full h-1.5" />
-      </div>
-      <div className="flex justify-between text-xs">
-        <span className="text-muted-foreground">Saldo</span>
-        <span className={cn("font-bold", textColor)}>{formatMoney(balance)}</span>
-      </div>
-    </div>
-  );
-}
+    );
+  }
+);
+MockFiadoCard.displayName = "MockFiadoCard";
 
 function MockMetricCard({ label, value, icon: Icon, accent }: { label: string; value: string; icon: any; accent?: boolean }) {
   return (
