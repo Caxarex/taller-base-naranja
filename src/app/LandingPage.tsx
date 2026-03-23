@@ -1,518 +1,331 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/components/ThemeProvider";
+import { StatusBadge } from "@/components/StatusBadge";
+import { formatMoney } from "@/lib/format";
 import {
-  Wrench,
-  ArrowRight,
-  Shield,
-  Smartphone,
-  BarChart3,
-  Clock,
-  ClipboardList,
-  HandCoins,
-  PackageSearch,
-  Search,
-  ChevronRight,
-  Car,
-  AlertTriangle,
-  UserPlus,
-  Building2,
-  FileText,
-  Sparkles,
-  CheckCircle2,
-  DollarSign,
-  Plus,
+  Wrench, ArrowRight, ClipboardList, HandCoins, Package, Radio, Sun, Moon,
+  AlertTriangle, BarChart3, Shield, Clock, Users, CheckCircle2, ChevronDown,
+  Smartphone, TrendingUp, Eye, Bell, Zap, Car
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
-/* ─── Mock UI Cards for the preview section ─── */
+/* ───── Tiny sub-components for landing ───── */
 
-function MockOrderCard({ code, name, plate, status, amount, statusColor }: {
-  code: string; name: string; plate: string; status: string; amount: string; statusColor: string;
-}) {
+function NavBar() {
+  const { theme, toggleTheme } = useTheme();
   return (
-    <div className="rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-card-hover">
-      <div className="flex items-start justify-between gap-2 mb-3">
+    <header className="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-xl">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 flex items-center justify-between h-14">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <Wrench className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <span className="font-display text-lg font-bold">Tallio</span>
+        </Link>
         <div className="flex items-center gap-2">
-          <span className="font-display text-sm font-bold text-foreground">{code}</span>
-          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold", statusColor)}>{status}</span>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-elevated text-muted-foreground shrink-0">
-          <Car className="h-5 w-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">{name}</p>
-          <p className="text-xs text-muted-foreground">
-            <span className="font-mono font-semibold text-foreground">{plate}</span>
-          </p>
+          <button onClick={toggleTheme} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-elevated transition-colors" aria-label="Cambiar tema">
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+          <Link to="/auth/login"><Button variant="ghost" size="sm">Ingresar</Button></Link>
+          <Link to="/auth/register"><Button size="sm">Crear taller</Button></Link>
         </div>
       </div>
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-soft">
-        <span className="text-xs text-muted-foreground">Hoy</span>
-        <span className="text-sm font-bold text-foreground">{amount}</span>
+    </header>
+  );
+}
+
+function SectionTitle({ tag, title, desc, className }: { tag?: string; title: string; desc?: string; className?: string }) {
+  return (
+    <div className={cn("max-w-2xl", className)}>
+      {tag && <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-2">{tag}</p>}
+      <h2 className="font-display text-display-md md:text-display-lg">{title}</h2>
+      {desc && <p className="text-muted-foreground mt-3 text-base md:text-lg leading-relaxed">{desc}</p>}
+    </div>
+  );
+}
+
+/* Mock cards used in product preview section */
+function MockOrderCard() {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 space-y-2 shadow-card">
+      <div className="flex items-center justify-between">
+        <span className="font-display text-sm font-bold">ORD-0042</span>
+        <StatusBadge status="en_reparacion" />
+      </div>
+      <p className="text-xs text-muted-foreground">María Gutiérrez · DEF-5678</p>
+      <div className="flex justify-between text-xs">
+        <span className="text-muted-foreground">Total</span>
+        <span className="font-semibold">{formatMoney(3970)}</span>
       </div>
     </div>
   );
 }
 
-function MockMetricCard({ label, value, icon, variant }: {
-  label: string; value: string; icon: React.ReactNode; variant: string;
-}) {
-  const iconColors: Record<string, string> = {
-    primary: "bg-primary/10 text-primary",
-    info: "bg-info/10 text-info",
-    warning: "bg-warning/10 text-warning",
-    destructive: "bg-destructive/10 text-destructive",
-    success: "bg-success/10 text-success",
-  };
+function MockFiadoCard() {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs text-muted-foreground font-medium mb-1.5">{label}</p>
-          <p className="font-display text-xl font-bold text-foreground tracking-tight">{value}</p>
-        </div>
-        <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl shrink-0", iconColors[variant] ?? iconColors.primary)}>
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MockFiadoBar({ name, pct, total, paid, overdue }: {
-  name: string; pct: number; total: string; paid: string; overdue?: boolean;
-}) {
-  return (
-    <div className={cn("rounded-xl border bg-card p-4", overdue ? "border-destructive/30" : "border-border")}>
+    <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 shadow-card">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-semibold text-foreground">{name}</span>
-        {overdue && <span className="text-[10px] font-semibold text-destructive bg-destructive/10 rounded-full px-2 py-0.5">Vencido</span>}
+        <span className="text-sm font-semibold">Carlos Hernández</span>
+        <StatusBadge status="vencido" />
       </div>
-      <div className="h-2 rounded-full bg-elevated overflow-hidden mb-2">
-        <div
-          className={cn("h-full rounded-full transition-all", overdue ? "bg-destructive" : pct >= 100 ? "bg-success" : "bg-primary")}
-          style={{ width: `${Math.min(pct, 100)}%` }}
-        />
+      <div className="w-full bg-muted rounded-full h-1.5 mb-1.5">
+        <div className="bg-primary rounded-full h-1.5" style={{ width: "0%" }} />
       </div>
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-success font-medium">Abonado: {paid}</span>
-        <span className="text-muted-foreground">Total: {total}</span>
+      <div className="flex justify-between text-xs">
+        <span className="text-muted-foreground">Saldo</span>
+        <span className="font-bold text-destructive">{formatMoney(600)}</span>
       </div>
     </div>
   );
 }
 
-/* ─── Pain Point Card ─── */
-function PainCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function MockMetricCard({ label, value, icon: Icon, accent }: { label: string; value: string; icon: any; accent?: boolean }) {
   return (
-    <div className="flex gap-4 items-start">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
-        {icon}
+    <div className={cn("rounded-xl border p-4 shadow-card", accent ? "border-primary/20 bg-primary/5" : "border-border bg-card")}>
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{label}</p>
+        <Icon className={cn("h-4 w-4", accent ? "text-primary" : "text-muted-foreground")} />
       </div>
-      <div>
-        <h3 className="font-display text-sm font-bold text-foreground mb-1">{title}</h3>
-        <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-      </div>
+      <p className={cn("font-display text-xl font-bold mt-1", accent && "text-primary")}>{value}</p>
     </div>
   );
 }
 
-/* ─── Solution Block ─── */
-function SolutionBlock({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function MockTrackingCard() {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 lg:p-6 transition-shadow hover:shadow-card-hover group">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary mb-4 transition-transform group-hover:scale-105">
-        {icon}
+    <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <p className="text-[11px] text-muted-foreground">Taller Méndez</p>
+          <p className="font-display text-lg font-bold">ORD-0005</p>
+        </div>
+        <StatusBadge status="listo" size="md" />
       </div>
-      <h3 className="font-display text-base font-bold text-foreground mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted text-xs">
+        <Car className="h-4 w-4 text-muted-foreground" />
+        <span>Ford Focus 2018 · MNO-7890</span>
+      </div>
+      <div className="mt-3 flex items-center gap-1">
+        {["recibido", "diagnostico", "cotizado", "aprobado", "en_reparacion", "listo"].map((s, i) => (
+          <div key={s} className={cn("h-1.5 flex-1 rounded-full", i <= 5 ? "bg-success" : "bg-muted")} />
+        ))}
+        <div className="h-1.5 flex-1 rounded-full bg-muted" />
+      </div>
     </div>
   );
 }
 
-/* ─── Step Card ─── */
-function StepCard({ num, title, desc }: { num: string; title: string; desc: string }) {
+/* ───── FAQ ───── */
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="relative flex flex-col items-center text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-lg font-bold mb-4 shadow-sm">
-        {num}
-      </div>
-      <h3 className="font-display text-sm font-bold text-foreground mb-1.5">{title}</h3>
-      <p className="text-xs text-muted-foreground leading-relaxed max-w-[200px]">{desc}</p>
+    <div className="border-b border-border">
+      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full py-4 text-left">
+        <span className="text-sm font-semibold pr-4">{q}</span>
+        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform flex-shrink-0", open && "rotate-180")} />
+      </button>
+      {open && <p className="text-sm text-muted-foreground pb-4 -mt-1">{a}</p>}
     </div>
   );
 }
 
-/* ─── Feature Row ─── */
-function FeatureItem({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
-  return (
-    <div className="flex items-start gap-4 p-4 rounded-xl transition-colors hover:bg-elevated">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        {icon}
-      </div>
-      <div>
-        <h3 className="font-display text-sm font-bold text-foreground mb-0.5">{title}</h3>
-        <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════
-   LANDING PAGE
-   ═══════════════════════════════════════════ */
-
+/* ───── MAIN ───── */
 export default function LandingPage() {
-  const { user } = useAuth();
-
   return (
     <div className="min-h-screen bg-canvas">
-      {/* ─── HEADER ─── */}
-      <nav className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="mx-auto max-w-6xl flex items-center justify-between px-4 md:px-6 h-14 lg:h-16">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm">
-              <Wrench className="h-4.5 w-4.5 text-primary-foreground" />
-            </div>
-            <span className="font-display text-xl font-bold text-foreground tracking-tight">Tallio</span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {user ? (
-              <Link to="/app">
-                <Button size="sm">Ir al panel</Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/auth/login">
-                  <Button variant="ghost" size="sm" className="text-sm">Entrar</Button>
-                </Link>
-                <Link to="/auth/register">
-                  <Button size="sm" className="text-sm">Crear cuenta</Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
-      {/* ─── 1. HERO ─── */}
+      {/* ══════ 1. HERO ══════ */}
       <section className="relative overflow-hidden">
-        {/* Background accent */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-primary/5 blur-3xl" />
-        </div>
-
-        <div className="mx-auto max-w-6xl px-4 md:px-6 pt-12 pb-12 md:pt-20 md:pb-16 lg:pt-24 lg:pb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* Copy */}
-            <div className="lg:col-span-5 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary mb-6">
-                <Shield className="h-3.5 w-3.5" />
-                Sistema para talleres mecánicos
+        <div className="max-w-6xl mx-auto px-4 md:px-6 pt-16 pb-20 md:pt-24 md:pb-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                <Zap className="h-3.5 w-3.5" /> Sistema para talleres mecánicos
               </div>
-              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-display-xl font-bold text-foreground leading-tight">
-                El sistema operativo
-                <span className="block text-primary"> de tu taller</span>
+              <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold leading-[1.1]">
+                El sistema operativo de tu taller
               </h1>
-              <p className="mt-4 md:mt-5 text-base md:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0 leading-relaxed">
-                Tus órdenes, tus fíos y el estado del auto en un solo lugar. Menos vueltas. Más control.
+              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+                Órdenes, fíos, inventario y el estado del auto en un solo lugar. Menos vueltas. Más control.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3">
-                <Link to="/auth/register">
-                  <Button size="lg" className="text-base px-8 shadow-sm">
-                    Crear mi taller <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/auth/login">
-                  <Button variant="outline" size="lg" className="text-base px-8">
-                    Iniciar sesión
-                  </Button>
-                </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/auth/register"><Button size="lg" className="gap-2">Crear mi taller <ArrowRight className="h-4 w-4" /></Button></Link>
+                <Link to="/auth/login"><Button variant="outline" size="lg">Iniciar sesión</Button></Link>
               </div>
             </div>
-
-            {/* Mock UI Preview */}
-            <div className="lg:col-span-7 relative">
-              <div className="rounded-2xl border border-border bg-card p-4 md:p-5 shadow-hero">
-                {/* Mock header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="font-display text-display-sm text-foreground">Panel de control</h2>
-                    <p className="text-xs text-muted-foreground">Taller Hernández · Hoy</p>
-                  </div>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                    <Plus className="h-4 w-4" />
-                  </div>
-                </div>
-                {/* Mock metrics */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 mb-4">
-                  <MockMetricCard label="Ingresos" value="$48,500" icon={<DollarSign className="h-5 w-5" />} variant="primary" />
-                  <MockMetricCard label="Órdenes activas" value="12" icon={<ClipboardList className="h-5 w-5" />} variant="info" />
-                  <MockMetricCard label="Fíos pendientes" value="$8,200" icon={<HandCoins className="h-5 w-5" />} variant="warning" />
-                </div>
-                {/* Mock orders */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                  <MockOrderCard
-                    code="ORD-0042"
-                    name="Roberto Mendoza"
-                    plate="ABC-123"
-                    status="En reparación"
-                    amount="$4,800"
-                    statusColor="bg-info/10 text-info"
-                  />
-                  <MockOrderCard
-                    code="ORD-0043"
-                    name="María López"
-                    plate="XYZ-789"
-                    status="Cotizado"
-                    amount="$2,350"
-                    statusColor="bg-warning/10 text-warning"
-                  />
-                </div>
+            {/* Mock dashboard preview */}
+            <div className="hidden lg:block relative">
+              <div className="grid grid-cols-2 gap-3 max-w-sm ml-auto">
+                <MockMetricCard label="Ingresos" value="$12,810" icon={TrendingUp} accent />
+                <MockMetricCard label="Órdenes activas" value="4" icon={ClipboardList} />
+                <MockOrderCard />
+                <MockFiadoCard />
               </div>
-              {/* Floating accent */}
-              <div className="absolute -bottom-3 -right-3 w-24 h-24 rounded-full bg-primary/10 blur-2xl -z-10" />
             </div>
           </div>
         </div>
+        {/* Gradient bg */}
+        <div className="absolute inset-0 -z-10 opacity-30 dark:opacity-20 bg-gradient-to-br from-primary/20 via-transparent to-transparent" />
       </section>
 
-      {/* ─── 2. PROBLEMA ─── */}
-      <section className="border-t border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 py-16 md:py-20 lg:py-24">
-          <div className="max-w-2xl mx-auto text-center mb-12 md:mb-16">
-            <h2 className="font-display text-display-md md:text-display-lg text-foreground mb-4">
-              ¿Tu taller funciona así?
-            </h2>
-            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-              Si tu control depende de papelitos, memoria y grupos de WhatsApp, estás perdiendo dinero sin darte cuenta.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 max-w-3xl mx-auto">
-            <PainCard
-              icon={<HandCoins className="h-5 w-5" />}
-              title="Fíos olvidados"
-              desc="Se te pasan cobros, no recuerdas cuánto te deben y los clientes se hacen los olvidados."
-            />
-            <PainCard
-              icon={<Smartphone className="h-5 w-5" />}
-              title="Clientes preguntando todo el día"
-              desc='"¿Ya está mi carro?" por WhatsApp 15 veces al día. Pierdes tiempo contestando lo mismo.'
-            />
-            <PainCard
-              icon={<PackageSearch className="h-5 w-5" />}
-              title="Inventario en la cabeza"
-              desc="No sabes cuántas piezas te quedan hasta que las necesitas y ya no hay."
-            />
-            <PainCard
-              icon={<AlertTriangle className="h-5 w-5" />}
-              title="Desorden operativo"
-              desc="Órdenes en libretas, cotizaciones en servilletas, pagos sin registro. Todo desordenado."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ─── 3. SOLUCIÓN ─── */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 py-16 md:py-20 lg:py-24">
-          <div className="max-w-2xl mx-auto text-center mb-12 md:mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success mb-4">
-              <Sparkles className="h-3.5 w-3.5" />
-              La solución
-            </div>
-            <h2 className="font-display text-display-md md:text-display-lg text-foreground mb-4">
-              Tallio organiza todo por ti
-            </h2>
-            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-              Un solo sistema para controlar órdenes, cobrar fíos, vigilar tu inventario y darle seguimiento a tus clientes.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-            <SolutionBlock
-              icon={<ClipboardList className="h-6 w-6" />}
-              title="Órdenes de trabajo"
-              desc="Registra, cotiza y sigue cada reparación. De recibido a entregado, sin perder nada."
-            />
-            <SolutionBlock
-              icon={<HandCoins className="h-6 w-6" />}
-              title="Fíos y cobranza"
-              desc="Controla saldos, abonos y vencimientos. Nunca más cobres de memoria."
-            />
-            <SolutionBlock
-              icon={<PackageSearch className="h-6 w-6" />}
-              title="Inventario"
-              desc="Sabe qué tienes, qué te falta y cuándo pedir. Alertas antes de que sea tarde."
-            />
-            <SolutionBlock
-              icon={<Smartphone className="h-6 w-6" />}
-              title="Tracking público"
-              desc="Tu cliente consulta el estado de su auto desde su celular. Sin llamarte."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ─── 4. FEATURES DETALLE ─── */}
-      <section className="border-t border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 py-16 md:py-20 lg:py-24">
-          <div className="max-w-2xl mx-auto text-center mb-12">
-            <h2 className="font-display text-display-md md:text-display-lg text-foreground mb-4">
-              Todo lo que necesita tu taller
-            </h2>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Herramientas diseñadas para el día a día real del taller.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
-            <FeatureItem
-              icon={<BarChart3 className="h-5 w-5" />}
-              title="Dashboard del dueño"
-              desc="Métricas claras: ingresos, órdenes activas, fíos pendientes y alertas de stock."
-            />
-            <FeatureItem
-              icon={<ClipboardList className="h-5 w-5" />}
-              title="Lista de órdenes"
-              desc="Filtra por estado, busca por placa o cliente, y ve el estatus de cada trabajo."
-            />
-            <FeatureItem
-              icon={<HandCoins className="h-5 w-5" />}
-              title="Fíos por cobrar"
-              desc="Visualiza quién te debe, cuánto falta, y registra abonos al instante."
-            />
-            <FeatureItem
-              icon={<AlertTriangle className="h-5 w-5" />}
-              title="Alertas de stock"
-              desc="Recibe avisos cuando tus refacciones bajan del mínimo. Nunca te quedes sin piezas."
-            />
-            <FeatureItem
-              icon={<Search className="h-5 w-5" />}
-              title="Tracking del auto"
-              desc="Tu cliente escanea un código y ve el estado de su reparación en tiempo real."
-            />
-            <FeatureItem
-              icon={<Clock className="h-5 w-5" />}
-              title="Registro rápido"
-              desc="En 2 minutos creas tu taller y empiezas a registrar tu primera orden."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ─── 5. FLUJO SIMPLE ─── */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 py-16 md:py-20 lg:py-24">
-          <div className="max-w-2xl mx-auto text-center mb-12 md:mb-16">
-            <h2 className="font-display text-display-md md:text-display-lg text-foreground mb-4">
-              Empieza en minutos
-            </h2>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Sin contratos, sin configuraciones complicadas. Solo regístrate y listo.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 max-w-3xl lg:max-w-none mx-auto">
-            <StepCard num="1" title="Te registras" desc="Email y contraseña. Sin complicaciones." />
-            <StepCard num="2" title="Creas tu taller" desc="Nombre, dirección y datos básicos." />
-            <StepCard num="3" title="Registras órdenes" desc="Clientes, vehículos y cotizaciones." />
-            <StepCard num="4" title="Tallio organiza" desc="Fíos, inventario, tracking y más." />
-          </div>
-        </div>
-      </section>
-
-      {/* ─── 6. UI PREVIEW ─── */}
-      <section className="border-t border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 py-16 md:py-20 lg:py-24">
-          <div className="max-w-2xl mx-auto text-center mb-12">
-            <h2 className="font-display text-display-md md:text-display-lg text-foreground mb-4">
-              Diseñado para talleres reales
-            </h2>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Interfaz clara, rápida y que puedes usar con las manos sucias.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
-            {/* Fíos panel */}
-            <div className="lg:col-span-5">
-              <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-display text-sm font-bold text-foreground">Fíos pendientes</h3>
-                  <span className="text-xs text-primary font-semibold">Ver todos</span>
+      {/* ══════ 2. PROBLEMA ══════ */}
+      <section className="border-t border-border bg-surface py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <SectionTitle tag="El problema" title="Tu taller funciona, pero ¿a qué costo?" desc="Cobras con memoria, apuntas en libretas, y tus clientes te mandan WhatsApp preguntando '¿ya está mi carro?'. No es sostenible." className="mb-10" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { icon: HandCoins, title: "Fíos olvidados", desc: "Saldos que se pierden porque nadie los registra ni los cobra a tiempo." },
+              { icon: Smartphone, title: "WhatsApp interminable", desc: "Clientes preguntando status cada hora. Pierdes tiempo contestando lo mismo." },
+              { icon: Package, title: "Inventario en la cabeza", desc: "No sabes qué tienes en stock hasta que lo necesitas y ya no hay." },
+              { icon: AlertTriangle, title: "Desorden operativo", desc: "Papelitos, libretas y memoria. Un día se pierde algo importante." },
+            ].map(item => (
+              <div key={item.title} className="rounded-xl border border-border bg-card p-5 hover:shadow-card-hover transition-shadow">
+                <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
+                  <item.icon className="h-5 w-5 text-destructive" />
                 </div>
-                <div className="flex flex-col gap-3">
-                  <MockFiadoBar name="Carlos Ramírez" pct={65} total="$6,200" paid="$4,030" />
-                  <MockFiadoBar name="Ana Gutiérrez" pct={30} total="$3,500" paid="$1,050" overdue />
-                  <MockFiadoBar name="Pedro Sánchez" pct={90} total="$2,000" paid="$1,800" />
+                <h3 className="font-display text-sm font-semibold mb-1">{item.title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 3. SOLUCIÓN ══════ */}
+      <section className="py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <SectionTitle tag="La solución" title="Tallio organiza todo lo que tu taller necesita" desc="Un sistema simple, moderno y hecho para talleres reales. No necesitas ser experto en tecnología." className="mb-10" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { icon: ClipboardList, title: "Órdenes", desc: "Registra, da seguimiento y avanza cada orden con un timeline visual. Del recibido al entregado.", color: "bg-info/10 text-info" },
+              { icon: HandCoins, title: "Fíos", desc: "Cartera de créditos viva. Saldos, vencimientos, abonos y urgencia. Cobra lo que te deben.", color: "bg-warning/10 text-warning" },
+              { icon: Package, title: "Inventario", desc: "Productos, stock actual, mínimos y alertas de reabastecimiento. Sin sorpresas.", color: "bg-success/10 text-success" },
+              { icon: Radio, title: "Tracking público", desc: "Tu cliente consulta el estado de su auto desde el celular. Sin llamadas ni WhatsApp.", color: "bg-primary/10 text-primary" },
+            ].map(item => (
+              <div key={item.title} className="rounded-xl border border-border bg-card p-6 hover:shadow-card-hover transition-shadow">
+                <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center mb-4", item.color)}>
+                  <item.icon className="h-5 w-5" />
+                </div>
+                <h3 className="font-display text-display-sm mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 4. FEATURES ══════ */}
+      <section className="border-t border-border bg-surface py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <SectionTitle tag="Funcionalidades" title="Todo lo que necesitas, nada que te sobre" className="mb-10" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[
+              { icon: BarChart3, label: "Dashboard del dueño" },
+              { icon: ClipboardList, label: "Lista de órdenes" },
+              { icon: HandCoins, label: "Fíos por cobrar" },
+              { icon: AlertTriangle, label: "Alertas de stock" },
+              { icon: Eye, label: "Tracking del auto" },
+              { icon: Zap, label: "Registro rápido" },
+              { icon: Shield, label: "Datos seguros" },
+              { icon: Bell, label: "Recordatorios" },
+              { icon: Users, label: "Multi-usuario" },
+            ].map(f => (
+              <div key={f.label} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:shadow-card-hover transition-shadow">
+                <f.icon className="h-5 w-5 text-primary flex-shrink-0" />
+                <span className="text-sm font-medium">{f.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 5. CÓMO FUNCIONA ══════ */}
+      <section className="py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <SectionTitle tag="Cómo funciona" title="Empieza en minutos, no en semanas" className="mb-10" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { step: "1", title: "Te registras", desc: "Crea tu cuenta con correo y contraseña." },
+              { step: "2", title: "Creas tu taller", desc: "Ponle nombre y listo. Se carga con datos de ejemplo." },
+              { step: "3", title: "Registras órdenes", desc: "Cliente, vehículo, problema. En 3 pasos." },
+              { step: "4", title: "Tallio organiza", desc: "Timeline, fíos, inventario y tracking. Todo automático." },
+            ].map(s => (
+              <div key={s.step} className="rounded-xl border border-border bg-card p-5">
+                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                  <span className="font-display text-sm font-bold text-primary">{s.step}</span>
+                </div>
+                <h3 className="font-display text-sm font-semibold mb-1">{s.title}</h3>
+                <p className="text-xs text-muted-foreground">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 6. PRODUCT PREVIEW ══════ */}
+      <section className="border-t border-border bg-surface py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <SectionTitle tag="Vista previa" title="Así se ve Tallio por dentro" desc="Interfaces reales, datos reales, diseño pensado para el trabajo diario del taller." className="mb-10" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-3">
+              <MockMetricCard label="Ingresos del mes" value="$28,640" icon={TrendingUp} accent />
+              <MockMetricCard label="Órdenes activas" value="4" icon={ClipboardList} />
+              <MockMetricCard label="Fíos pendientes" value="$4,020" icon={HandCoins} />
+            </div>
+            <div className="space-y-3">
+              <MockOrderCard />
+              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-display text-sm font-bold">ORD-0003</span>
+                  <StatusBadge status="diagnostico" />
+                </div>
+                <p className="text-xs text-muted-foreground">Carlos Hernández · GHI-9012</p>
+                <p className="text-xs text-muted-foreground mt-1">Ruido en motor</p>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-display text-sm font-bold">ORD-0004</span>
+                  <StatusBadge status="cotizado" />
+                </div>
+                <p className="text-xs text-muted-foreground">Ana López · JKL-3456</p>
+                <div className="flex justify-between text-xs mt-1">
+                  <span className="text-muted-foreground">Total</span>
+                  <span className="font-semibold">{formatMoney(11200)}</span>
                 </div>
               </div>
             </div>
+            <div className="space-y-3">
+              <MockTrackingCard />
+              <MockFiadoCard />
+            </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Tracking preview */}
-            <div className="lg:col-span-7">
-              <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-sm">
-                    <Wrench className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-display text-sm font-bold text-foreground">Taller Hernández</p>
-                    <p className="text-xs text-muted-foreground">Seguimiento de orden</p>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-border bg-elevated/50 p-4 mb-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-display text-lg font-bold text-foreground">ORD-0042</span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-info/10 text-info px-2.5 py-0.5 text-xs font-semibold">
-                      En reparación
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Honda Civic 2019 · <span className="font-mono font-semibold text-foreground">ABC-123</span></p>
-                </div>
-
-                {/* Mini timeline */}
-                <div className="flex flex-col gap-0">
-                  {[
-                    { label: "Recibido", done: true },
-                    { label: "Diagnóstico", done: true },
-                    { label: "Cotizado", done: true },
-                    { label: "Aprobado", done: true },
-                    { label: "En reparación", done: true, active: true },
-                    { label: "Listo", done: false },
-                    { label: "Entregado", done: false },
-                  ].map((step, i, arr) => (
-                    <div key={step.label} className="flex items-start gap-3">
-                      <div className="flex flex-col items-center">
-                        <div className={cn(
-                          "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold shrink-0",
-                          step.active
-                            ? "bg-primary text-primary-foreground"
-                            : step.done
-                              ? "bg-success text-success-foreground"
-                              : "bg-elevated text-muted-foreground"
-                        )}>
-                          {step.done ? <CheckCircle2 className="h-3.5 w-3.5" /> : <span>{i + 1}</span>}
-                        </div>
-                        {i < arr.length - 1 && (
-                          <div className={cn("w-0.5 h-5", step.done ? "bg-success/40" : "bg-border")} />
-                        )}
-                      </div>
-                      <span className={cn(
-                        "text-xs pt-1",
-                        step.active ? "font-bold text-primary" : step.done ? "font-medium text-foreground" : "text-muted-foreground"
-                      )}>
-                        {step.label}
-                      </span>
+      {/* ══════ 7. ÓRDENES ══════ */}
+      <section className="py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div>
+              <SectionTitle tag="Órdenes" title="Cada auto tiene su historia" desc="Registra el problema, diagnóstico, refacciones y mano de obra. Avanza el estado con un clic. Tu cliente ve el progreso en tiempo real." />
+              <ul className="mt-6 space-y-2">
+                {["Timeline visual de cada orden", "Refacciones + mano de obra desglosados", "Saldo pendiente claro", "Código de tracking para el cliente"].map(t => (
+                  <li key={t} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />{t}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="space-y-3 max-w-sm ml-auto">
+              <MockOrderCard />
+              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+                <p className="text-xs text-muted-foreground mb-2">Timeline</p>
+                <div className="space-y-2">
+                  {["Recibido", "Diagnóstico", "Cotizado", "Aprobado", "En reparación"].map((s, i) => (
+                    <div key={s} className="flex items-center gap-2">
+                      <CheckCircle2 className={cn("h-4 w-4", i < 4 ? "text-success" : "text-primary")} />
+                      <span className="text-xs">{s}</span>
                     </div>
                   ))}
                 </div>
@@ -522,107 +335,166 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 7. FAQ ─── */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-3xl px-4 md:px-6 py-16 md:py-20 lg:py-24">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-display-md md:text-display-lg text-foreground mb-4">
-              Preguntas frecuentes
-            </h2>
-          </div>
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="1">
-              <AccordionTrigger className="font-display text-sm font-semibold text-foreground text-left">
-                ¿Necesito saber de computadoras para usar Tallio?
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                No. Tallio está diseñado para ser tan fácil como enviar un WhatsApp. Si sabes usar un celular, ya sabes usar Tallio.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="2">
-              <AccordionTrigger className="font-display text-sm font-semibold text-foreground text-left">
-                ¿Mis clientes pueden ver el estado de su auto?
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                Sí. Cada orden tiene un código de tracking. Tu cliente abre un link desde su celular y ve el progreso sin necesidad de registrarse.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="3">
-              <AccordionTrigger className="font-display text-sm font-semibold text-foreground text-left">
-                ¿Cuánto cuesta?
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                Puedes empezar gratis. Más adelante habrá planes con funciones avanzadas, pero lo esencial siempre estará disponible.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="4">
-              <AccordionTrigger className="font-display text-sm font-semibold text-foreground text-left">
-                ¿Puedo usarlo desde mi celular?
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                Sí. Tallio funciona desde cualquier navegador, en celular, tablet o computadora. No necesitas instalar nada.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="5">
-              <AccordionTrigger className="font-display text-sm font-semibold text-foreground text-left">
-                ¿Mis datos están seguros?
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                Absolutamente. Usamos infraestructura profesional con encriptación y respaldos automáticos. Tu información está protegida.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="6">
-              <AccordionTrigger className="font-display text-sm font-semibold text-foreground text-left">
-                ¿Puedo registrar a mi recepcionista y mecánicos?
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                Próximamente. En la siguiente versión podrás invitar a tu equipo con roles separados: dueño, recepción y mecánico.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </section>
-
-      {/* ─── 8. CTA FINAL ─── */}
-      <section className="border-t border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 py-16 md:py-20 lg:py-24">
-          <div className="rounded-2xl border border-primary/20 bg-card p-8 md:p-12 lg:p-16 text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
-            <div className="relative">
-              <h2 className="font-display text-display-md md:text-display-lg text-foreground mb-3">
-                Deja de cobrar con memoria
-              </h2>
-              <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto mb-8 leading-relaxed">
-                Registra tu taller en minutos y empieza a organizar tus órdenes, fíos e inventario hoy mismo.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link to="/auth/register">
-                  <Button size="lg" className="text-base px-8 shadow-sm">
-                    Crear mi taller <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/auth/login">
-                  <Button variant="outline" size="lg" className="text-base px-8">
-                    Ya tengo cuenta
-                  </Button>
-                </Link>
+      {/* ══════ 8. FÍOS ══════ */}
+      <section className="border-t border-border bg-surface py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div className="order-2 lg:order-1 space-y-3 max-w-sm">
+              <MockFiadoCard />
+              <div className="rounded-xl border border-warning/20 bg-warning/5 p-4 shadow-card">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold">José Ramírez</span>
+                  <StatusBadge status="por_vencer" />
+                </div>
+                <div className="w-full bg-muted rounded-full h-1.5 mb-1.5">
+                  <div className="bg-primary rounded-full h-1.5" style={{ width: "41%" }} />
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{formatMoney(1000)} de {formatMoney(2450)}</span>
+                  <span className="font-bold text-warning">{formatMoney(1450)}</span>
+                </div>
               </div>
             </div>
+            <div className="order-1 lg:order-2">
+              <SectionTitle tag="Fíos" title="Deja de cobrar con memoria" desc="Cartera de créditos viva con saldos, vencimientos, abonos y urgencia visual. Sabes exactamente quién te debe, cuánto y desde cuándo." />
+              <ul className="mt-6 space-y-2">
+                {["Buckets: pendiente, por vencer, vencido", "Barra de progreso de pagos", "Historial de abonos", "Urgencia visual controlada"].map(t => (
+                  <li key={t} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />{t}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ─── FOOTER ─── */}
-      <footer className="border-t border-border py-8">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-              <Wrench className="h-3.5 w-3.5 text-primary" />
+      {/* ══════ 9. TRACKING ══════ */}
+      <section className="py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div>
+              <SectionTitle tag="Tracking público" title="Tu cliente sabe el estado de su auto" desc="Sin login, sin llamadas, sin WhatsApp. Le das un código y consulta el progreso desde su celular." />
+              <ul className="mt-6 space-y-2">
+                {["Sin login requerido", "Timeline de progreso visual", "Resumen económico claro", "Diseño premium y confiable"].map(t => (
+                  <li key={t} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />{t}</li>
+                ))}
+              </ul>
             </div>
-            <span className="font-display text-sm font-bold text-foreground">Tallio</span>
+            <div className="max-w-sm ml-auto">
+              <MockTrackingCard />
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">El sistema operativo del taller mecánico.</p>
+        </div>
+      </section>
+
+      {/* ══════ 10. INVENTARIO ══════ */}
+      <section className="border-t border-border bg-surface py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div className="space-y-2 max-w-sm order-2 lg:order-1">
+              {[
+                { name: "Disco de freno ventilado", sku: "DIS-001", stock: 0, min: 2, danger: true },
+                { name: "Banda serpentina", sku: "BAN-001", stock: 1, min: 2, danger: true },
+                { name: "Balatas cerámicas", sku: "BAL-001", stock: 2, min: 3, danger: true },
+              ].map(p => (
+                <div key={p.sku} className={cn("flex items-center justify-between p-3 rounded-xl border", p.danger ? "border-destructive/30 bg-destructive/5" : "border-border bg-card")}>
+                  <div>
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-[11px] text-muted-foreground">{p.sku}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={cn("text-sm font-bold", p.stock === 0 ? "text-destructive" : "text-warning")}>{p.stock}</span>
+                    <span className="text-[11px] text-muted-foreground"> / {p.min}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="order-1 lg:order-2">
+              <SectionTitle tag="Inventario" title="Sabe qué tienes antes de que te haga falta" desc="Stock actual, mínimos y alertas de reabastecimiento. Nunca te quedes sin una refacción en medio de un trabajo." />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 11. BENEFICIOS ══════ */}
+      <section className="py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <SectionTitle tag="Beneficios" title="Menos vueltas. Más control." className="text-center mx-auto mb-10" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { icon: Clock, title: "Ahorra tiempo", desc: "Deja de buscar papelitos. Todo está en un solo lugar." },
+              { icon: TrendingUp, title: "Cobra más", desc: "Los fíos no se olvidan. Las alertas te avisan antes de que venzan." },
+              { icon: Shield, title: "Profesionaliza", desc: "Tu cliente ve un tracking premium. Tu taller se ve serio." },
+            ].map(b => (
+              <div key={b.title} className="rounded-xl border border-border bg-card p-6 text-center hover:shadow-card-hover transition-shadow">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <b.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-display text-display-sm mb-2">{b.title}</h3>
+                <p className="text-sm text-muted-foreground">{b.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 12. PARA QUIÉN ══════ */}
+      <section className="border-t border-border bg-surface py-16 md:py-24">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <SectionTitle tag="¿Para quién es?" title="Hecho para talleres de todos los tamaños" className="text-center mx-auto mb-10" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { title: "Taller chico", desc: "1-3 mecánicos. Necesitas orden básica sin complicaciones." },
+              { title: "Taller mediano", desc: "4-10 personas. Necesitas control de fíos, inventario y equipo." },
+              { title: "Multi-sucursal", desc: "Varios puntos. Necesitas visibilidad centralizada (próximamente)." },
+            ].map(t => (
+              <div key={t.title} className="rounded-xl border border-border bg-card p-5">
+                <h3 className="font-display text-sm font-semibold mb-1">{t.title}</h3>
+                <p className="text-xs text-muted-foreground">{t.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 13. FAQ ══════ */}
+      <section className="py-16 md:py-24">
+        <div className="max-w-3xl mx-auto px-4 md:px-6">
+          <SectionTitle tag="Preguntas frecuentes" title="¿Tienes dudas?" className="mb-8" />
+          <div>
+            <FAQItem q="¿Necesito instalar algo?" a="No. Tallio es una aplicación web. Funciona desde el navegador de tu celular, tablet o computadora." />
+            <FAQItem q="¿Mis datos están seguros?" a="Sí. Usamos infraestructura en la nube con cifrado y respaldos automáticos." />
+            <FAQItem q="¿Cuánto cuesta?" a="Estamos en fase beta. Por ahora puedes crear tu taller gratis." />
+            <FAQItem q="¿Puedo usar Tallio desde el celular?" a="Sí. Está diseñado mobile-first. Se ve y funciona excelente en cualquier pantalla." />
+            <FAQItem q="¿Mi cliente necesita crear cuenta?" a="No. El tracking público funciona con un código, sin registro ni login." />
+            <FAQItem q="¿Puedo agregar mecánicos y recepcionistas?" a="Sí. Puedes invitar miembros a tu taller con distintos roles y permisos." />
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 14. CTA FINAL ══════ */}
+      <section className="border-t border-border bg-gradient-to-b from-surface to-canvas py-20 md:py-28">
+        <div className="max-w-3xl mx-auto px-4 md:px-6 text-center space-y-6">
+          <h2 className="font-display text-display-lg md:text-display-xl">¿Listo para organizar tu taller?</h2>
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
+            Empieza gratis. Configura tu taller en minutos. Sin tarjeta de crédito.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link to="/auth/register"><Button size="lg" className="gap-2">Crear mi taller <ArrowRight className="h-4 w-4" /></Button></Link>
+            <Link to="/auth/login"><Button variant="outline" size="lg">Iniciar sesión</Button></Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ FOOTER ══════ */}
+      <footer className="border-t border-border bg-surface py-8">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
+              <Wrench className="h-3.5 w-3.5 text-primary-foreground" />
+            </div>
+            <span className="font-display text-sm font-bold">Tallio</span>
+          </div>
+          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Tallio. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>

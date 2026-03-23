@@ -1,277 +1,336 @@
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useShop } from "@/hooks/useShop";
 import { AppShell } from "@/components/AppShell";
 import { MetricCard } from "@/components/MetricCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { useShop } from "@/hooks/useShop";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { DollarSign, ClipboardList, HandCoins, AlertTriangle, Plus, ArrowRight, Car, LogOut, Bell, PackageSearch } from "lucide-react";
-import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
 import { formatMoney, STATUS_LABELS } from "@/lib/format";
+import {
+  DollarSign, ClipboardList, HandCoins, AlertTriangle, Plus, ArrowRight,
+  Package, Bell, TrendingUp, Clock, Car
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default function DashboardPage() {
   const { currentShop } = useShop();
-  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const shopId = currentShop?.shopId;
 
-  const { data: ordenes = [] } = useQuery({
-    queryKey: ["orders", shopId],
+  const { data: orders, isLoading: loadingOrders } = useQuery({
+    queryKey: ["dashboard-orders", shopId],
     queryFn: async () => {
-      if (!shopId) return [];
       const { data } = await supabase
         .from("orders")
-        .select("id, public_code, status, total, paid_total, balance_due, created_at, problem_description, customers(full_name), vehicles(plate, make, model)")
-        .eq("shop_id", shopId)
-        .order("created_at", { ascending: false });
-      return data ?? [];
+        .select("*, customers(full_name), vehicles(plate, make, model)")
+        .eq("shop_id", shopId!)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data || [];
     },
     enabled: !!shopId,
   });
 
-  const { data: fiados = [] } = useQuery({
-    queryKey: ["fiados", shopId],
+  const { data: fiados, isLoading: loadingFiados } = useQuery({
+    queryKey: ["dashboard-fiados", shopId],
     queryFn: async () => {
-      if (!shopId) return [];
       const { data } = await supabase
         .from("fiados")
-        .select("id, total_amount, paid_amount, balance_due, due_date, status, customers(full_name), orders(public_code)")
-        .eq("shop_id", shopId)
-        .order("created_at", { ascending: false });
-      return data ?? [];
+        .select("*, customers(full_name)")
+        .eq("shop_id", shopId!)
+        .neq("status", "pagado")
+        .order("due_date", { ascending: true });
+      return data || [];
     },
     enabled: !!shopId,
   });
 
-  const { data: lowStock = [] } = useQuery({
-    queryKey: ["low-stock", shopId],
+  const { data: lowStock, isLoading: loadingStock } = useQuery({
+    queryKey: ["dashboard-stock", shopId],
     queryFn: async () => {
-      if (!shopId) return [];
       const { data } = await supabase
         .from("products")
-        .select("id, name, stock_qty, min_qty")
-        .eq("shop_id", shopId)
+        .select("*")
+        .eq("shop_id", shopId!)
         .eq("active", true);
-      return (data ?? []).filter((p) => (p.stock_qty ?? 0) <= (p.min_qty ?? 0));
+      return (data || []).filter(p => (p.stock_qty ?? 0) <= (p.min_qty ?? 0));
     },
     enabled: !!shopId,
   });
 
-  const { data: reminders = [] } = useQuery({
-    queryKey: ["reminders", shopId],
+  const { data: reminders } = useQuery({
+    queryKey: ["dashboard-reminders", shopId],
     queryFn: async () => {
-      if (!shopId) return [];
       const { data } = await supabase
         .from("reminders")
-        .select("id, title, due_at, status, type, customers(full_name)")
-        .eq("shop_id", shopId)
+        .select("*, customers(full_name)")
+        .eq("shop_id", shopId!)
         .eq("status", "pending")
-        .order("due_at");
-      return data ?? [];
+        .order("due_at", { ascending: true })
+        .limit(5);
+      return data || [];
     },
     enabled: !!shopId,
   });
 
-  const ordenesActivas = ordenes.filter((o) => !["entregado", "cancelado", "rechazado"].includes(o.status));
-  const fiosPendientes = fiados.filter((f) => f.status !== "pagado");
-  const fiosVencidos = fiados.filter((f) => f.status === "vencido");
-  const ingresosPeriodo = ordenes.reduce((s, o) => s + (o.paid_total ?? 0), 0);
-  const saldoTotal = fiosPendientes.reduce((s, f) => s + (f.balance_due ?? 0), 0);
-  const ordenesRecientes = ordenes.slice(0, 5);
+  const activeOrders = orders?.filter(o => !["entregado", "cancelado", "rechazado"].includes(o.status)) || [];
+  const totalRevenue = orders?.reduce((sum, o) => sum + Number(o.paid_total || 0), 0) || 0;
+  const totalPending = fiados?.reduce((sum, f) => sum + Number(f.balance_due || 0), 0) || 0;
+  const overdueCount = fiados?.filter(f => f.status === "vencido").length || 0;
+
+  const isLoading = loadingOrders || loadingFiados || loadingStock;
 
   return (
     <AppShell>
-      <div className="animate-fade-in">
-        <div className="px-4 md:px-6 lg:px-8 pt-6 lg:pt-8 pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-display text-display-md lg:text-display-lg text-foreground">Tallio</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {currentShop?.shopName ?? "Taller"} · Panel de control
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link
-                to="/app/orders/new"
-                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.97] shadow-sm"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nueva orden</span>
-              </Link>
-              <button
-                onClick={() => signOut()}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-elevated transition-colors"
-                title="Cerrar sesión"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
+        {/* Header + Quick Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Panel de control</p>
+            <h1 className="font-display text-display-md md:text-display-lg mt-1">
+              {currentShop?.shopName || "Mi Taller"}
+            </h1>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate("/app/orders/new")} size="sm" className="gap-1.5">
+              <Plus className="h-4 w-4" /> Nueva orden
+            </Button>
           </div>
         </div>
 
-        <div className="px-4 md:px-6 lg:px-8 py-4">
-          {/* Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3 lg:gap-4 mb-6">
-            <div className="col-span-2 md:col-span-2 lg:col-span-5">
-              <div className="rounded-xl border border-primary/20 bg-card p-5 lg:p-6 relative overflow-hidden h-full">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                <div className="relative">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                      <DollarSign className="h-5 w-5 text-primary" />
-                    </div>
-                    <span className="text-sm font-medium text-muted-foreground">Ingresos del período</span>
-                  </div>
-                  <p className="font-display text-metric-lg text-foreground tracking-tight">{formatMoney(ingresosPeriodo)}</p>
-                </div>
-              </div>
-            </div>
-            <div className="lg:col-span-7 col-span-2 md:col-span-2 grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-              <MetricCard label="Órdenes activas" value={String(ordenesActivas.length)} icon={<ClipboardList className="h-5 w-5" />} variant="info" />
-              <MetricCard label="Fíos pendientes" value={formatMoney(saldoTotal)} icon={<HandCoins className="h-5 w-5" />} variant="warning" sublabel={`${fiosPendientes.length} cuentas`} />
-              <MetricCard label="Alertas stock" value={String(lowStock.length)} icon={<AlertTriangle className="h-5 w-5" />} variant="destructive" sublabel={lowStock.length > 0 ? "Requieren atención" : "Todo en orden"} className="col-span-2 lg:col-span-1" />
-            </div>
+        {/* Metrics Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
           </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <MetricCard
+              label="Ingresos"
+              value={formatMoney(totalRevenue)}
+              icon={TrendingUp}
+              variant="hero"
+              trend="Este período"
+            />
+            <MetricCard
+              label="Órdenes activas"
+              value={activeOrders.length}
+              icon={ClipboardList}
+            />
+            <MetricCard
+              label="Fíos pendientes"
+              value={formatMoney(totalPending)}
+              icon={HandCoins}
+              variant="warning"
+            />
+            <MetricCard
+              label="Stock bajo"
+              value={lowStock?.length || 0}
+              icon={AlertTriangle}
+              variant={lowStock && lowStock.length > 0 ? "danger" : "default"}
+            />
+          </div>
+        )}
 
-          {/* Main grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
-            {/* Orders */}
-            <div className="lg:col-span-8">
-              <div className="rounded-xl border border-border bg-card">
-                <div className="flex items-center justify-between p-4 lg:p-5 border-b border-border-soft">
-                  <h2 className="font-display text-display-sm text-foreground">Órdenes recientes</h2>
-                  <Link to="/app/orders" className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
-                    Ver todas <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-                <div className="divide-y divide-border-soft">
-                  {ordenesRecientes.length === 0 && (
-                    <div className="p-8 text-center text-sm text-muted-foreground">No hay órdenes todavía. Crea la primera.</div>
-                  )}
-                  {ordenesRecientes.map((o) => {
-                    const customer = o.customers as unknown as { full_name: string } | null;
-                    const vehicle = o.vehicles as unknown as { plate: string; make: string; model: string } | null;
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+          {/* Left: Orders + Fiados */}
+          <div className="lg:col-span-2 space-y-4 md:space-y-6">
+            {/* Recent Orders */}
+            <section className="rounded-xl border border-border bg-card p-4 md:p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-display-sm">Órdenes recientes</h2>
+                <Link to="/app/orders" className="text-sm text-primary hover:underline flex items-center gap-1">
+                  Ver todas <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              {loadingOrders ? (
+                <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}</div>
+              ) : activeOrders.length === 0 ? (
+                <EmptyState icon={ClipboardList} title="Sin órdenes activas" description="Crea tu primera orden para empezar" actionLabel="Nueva orden" onAction={() => navigate("/app/orders/new")} className="py-8" />
+              ) : (
+                <div className="space-y-2">
+                  {activeOrders.slice(0, 5).map(order => {
+                    const cust = order.customers as unknown as { full_name: string } | null;
+                    const veh = order.vehicles as unknown as { plate: string; make: string; model: string } | null;
                     return (
-                      <Link key={o.id} to={`/app/orders/${o.id}`} className="flex items-center gap-3 px-4 lg:px-5 py-3 transition-colors hover:bg-elevated">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-elevated text-muted-foreground shrink-0">
-                          <Car className="h-4 w-4" />
+                      <Link
+                        key={order.id}
+                        to={`/app/orders/${order.id}`}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-elevated transition-colors group"
+                      >
+                        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                          <Car className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-foreground">{o.public_code}</span>
-                            <StatusBadge estado={STATUS_LABELS[o.status] ?? o.status} />
+                            <span className="text-sm font-semibold text-foreground truncate">
+                              {order.public_code}
+                            </span>
+                            <StatusBadge status={order.status} />
                           </div>
-                          <p className="text-xs text-muted-foreground truncate">{customer?.full_name ?? "—"} · {vehicle?.plate ?? "—"}</p>
-                        </div>
-                        <span className="text-sm font-semibold text-foreground shrink-0">{formatMoney(o.total ?? 0)}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="lg:col-span-4 flex flex-col gap-4">
-              {/* Fíos */}
-              <div className="rounded-xl border border-border bg-card">
-                <div className="flex items-center justify-between p-4 border-b border-border-soft">
-                  <h2 className="font-display text-sm font-semibold text-foreground">Fíos pendientes</h2>
-                  <Link to="/app/fiados" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">Ver todos</Link>
-                </div>
-                <div className="p-3 flex flex-col gap-3">
-                  {fiosPendientes.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sin fíos pendientes</p>}
-                  {fiosPendientes.slice(0, 3).map((f) => {
-                    const fc = f.customers as unknown as { full_name: string } | null;
-                    const fo = f.orders as unknown as { public_code: string } | null;
-                    const progress = f.total_amount > 0 ? (f.paid_amount / f.total_amount) * 100 : 0;
-                    return (
-                      <Link key={f.id} to={`/app/fiados/${f.id}`} className={cn("block rounded-xl border bg-card p-4 transition-all hover:shadow-card-hover active:scale-[0.99]", f.status === "vencido" ? "border-destructive/30" : "border-border")}>
-                        <div className="flex items-start justify-between gap-2 mb-3">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{fc?.full_name ?? "—"}</p>
-                            <p className="text-xs text-muted-foreground">{fo?.public_code ?? "—"} · Vence: {f.due_date ?? "—"}</p>
-                          </div>
-                          <StatusBadge estado={f.status} />
-                        </div>
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between text-xs mb-1.5">
-                            <span className="text-muted-foreground">Progreso</span>
-                            <span className="font-semibold text-foreground">{Math.round(progress)}%</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-elevated overflow-hidden">
-                            <div className={cn("h-full rounded-full transition-all", f.status === "vencido" ? "bg-destructive" : progress >= 100 ? "bg-success" : "bg-primary")} style={{ width: `${Math.min(progress, 100)}%` }} />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Abonado</p>
-                            <p className="text-sm font-semibold text-success">{formatMoney(f.paid_amount)}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Pendiente</p>
-                            <p className={cn("text-sm font-bold", f.status === "vencido" ? "text-destructive" : "text-foreground")}>{formatMoney(f.balance_due)}</p>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Alerts */}
-              {fiosVencidos.length > 0 && (
-                <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive" />
-                    <span className="text-sm font-semibold text-foreground">Atención requerida</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {fiosVencidos.length} fío{fiosVencidos.length > 1 ? "s" : ""} vencido{fiosVencidos.length > 1 ? "s" : ""}.
-                    Contacta a los clientes para regularizar.
-                  </p>
-                </div>
-              )}
-
-              {/* Reminders */}
-              {reminders.length > 0 && (
-                <div className="rounded-xl border border-border bg-card">
-                  <div className="flex items-center gap-2 p-4 border-b border-border-soft">
-                    <Bell className="h-4 w-4 text-muted-foreground" />
-                    <h2 className="font-display text-sm font-semibold text-foreground">Recordatorios</h2>
-                  </div>
-                  <div className="divide-y divide-border-soft">
-                    {reminders.slice(0, 3).map((r) => {
-                      const rc = r.customers as unknown as { full_name: string } | null;
-                      return (
-                        <div key={r.id} className="px-4 py-3">
-                          <p className="text-sm font-medium text-foreground">{r.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {rc?.full_name ?? ""} · {r.due_at ? new Date(r.due_at).toLocaleDateString("es-MX") : "—"}
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            {cust?.full_name} · {veh?.plate} · {veh?.make} {veh?.model}
                           </p>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="text-right flex-shrink-0 hidden sm:block">
+                          <p className="text-sm font-semibold">{formatMoney(Number(order.total))}</p>
+                          {Number(order.balance_due) > 0 && (
+                            <p className="text-xs text-destructive">Saldo: {formatMoney(Number(order.balance_due))}</p>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
+            </section>
 
-              {/* Quick actions */}
-              <div className="rounded-xl border border-border bg-card p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Acciones rápidas</h3>
-                <div className="flex flex-col gap-2">
-                  <Link to="/app/orders/new" className="flex items-center gap-2 rounded-lg bg-elevated px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                    <Plus className="h-4 w-4 text-primary" /> Nueva orden
-                  </Link>
-                  <Link to="/app/fiados" className="flex items-center gap-2 rounded-lg bg-elevated px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                    <HandCoins className="h-4 w-4 text-warning" /> Ver fíos
-                  </Link>
-                  <Link to="/app/inventory" className="flex items-center gap-2 rounded-lg bg-elevated px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                    <PackageSearch className="h-4 w-4 text-info" /> Ver inventario
+            {/* Urgent Fiados */}
+            <section className="rounded-xl border border-border bg-card p-4 md:p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-display-sm">Fíos por cobrar</h2>
+                <Link to="/app/fiados" className="text-sm text-primary hover:underline flex items-center gap-1">
+                  Ver cartera <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              {loadingFiados ? (
+                <div className="space-y-3">{[...Array(2)].map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}</div>
+              ) : !fiados || fiados.length === 0 ? (
+                <EmptyState icon={HandCoins} title="Sin fíos pendientes" description="Todos los saldos están al corriente" className="py-8" />
+              ) : (
+                <div className="space-y-2">
+                  {fiados.slice(0, 4).map(f => {
+                    const cust = f.customers as unknown as { full_name: string } | null;
+                    const progress = f.total_amount > 0 ? (Number(f.paid_amount) / Number(f.total_amount)) * 100 : 0;
+                    return (
+                      <Link
+                        key={f.id}
+                        to={`/app/fiados/${f.id}`}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-elevated transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-semibold truncate">{cust?.full_name || "Sin cliente"}</span>
+                            <StatusBadge status={f.status} />
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-1.5">
+                            <div
+                              className="bg-primary rounded-full h-1.5 transition-all"
+                              style={{ width: `${Math.min(progress, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-bold text-destructive">{formatMoney(Number(f.balance_due))}</p>
+                          {f.due_date && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {format(new Date(f.due_date), "d MMM", { locale: es })}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="space-y-4 md:space-y-6">
+            {/* Quick Actions */}
+            <section className="rounded-xl border border-border bg-card p-4 md:p-5">
+              <h3 className="font-display text-sm font-semibold mb-3">Acciones rápidas</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "Nueva orden", icon: Plus, to: "/app/orders/new", primary: true },
+                  { label: "Ver órdenes", icon: ClipboardList, to: "/app/orders" },
+                  { label: "Ver fíos", icon: HandCoins, to: "/app/fiados" },
+                  { label: "Inventario", icon: Package, to: "/app/inventory" },
+                ].map(action => (
+                  <button
+                    key={action.label}
+                    onClick={() => navigate(action.to)}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-lg text-xs font-medium transition-colors ${
+                      action.primary
+                        ? "bg-primary/10 text-primary hover:bg-primary/15"
+                        : "bg-muted hover:bg-elevated text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <action.icon className="h-5 w-5" />
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Stock Alerts */}
+            <section className="rounded-xl border border-border bg-card p-4 md:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                <h3 className="font-display text-sm font-semibold">Stock bajo</h3>
+              </div>
+              {loadingStock ? (
+                <div className="space-y-2">{[...Array(2)].map((_, i) => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
+              ) : !lowStock || lowStock.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Todo al corriente</p>
+              ) : (
+                <div className="space-y-2">
+                  {lowStock.slice(0, 5).map(p => (
+                    <div key={p.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{p.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{p.sku}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-2">
+                        <span className={`text-sm font-bold ${(p.stock_qty ?? 0) === 0 ? "text-destructive" : "text-warning"}`}>
+                          {p.stock_qty ?? 0}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground"> / {p.min_qty}</span>
+                      </div>
+                    </div>
+                  ))}
+                  <Link to="/app/inventory" className="text-xs text-primary hover:underline">
+                    Ver inventario →
                   </Link>
                 </div>
+              )}
+            </section>
+
+            {/* Reminders */}
+            <section className="rounded-xl border border-border bg-card p-4 md:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Bell className="h-4 w-4 text-warning" />
+                <h3 className="font-display text-sm font-semibold">Recordatorios</h3>
               </div>
-            </div>
+              {!reminders || reminders.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sin recordatorios pendientes</p>
+              ) : (
+                <div className="space-y-2">
+                  {reminders.map(r => {
+                    const cust = r.customers as unknown as { full_name: string } | null;
+                    return (
+                      <div key={r.id} className="flex items-start gap-2 py-2 border-b border-border last:border-0">
+                        <Clock className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium leading-tight">{r.title}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {cust?.full_name}
+                            {r.due_at && ` · ${format(new Date(r.due_at), "d MMM", { locale: es })}`}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
           </div>
         </div>
       </div>
