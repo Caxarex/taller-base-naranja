@@ -50,9 +50,9 @@ const FloatingPanel = React.forwardRef<HTMLDivElement, { children: React.ReactNo
       {children}
     </motion.div>
   );
-}
+});
+FloatingPanel.displayName = "FloatingPanel";
 
-/* ───── Nav ───── */
 function NavBar() {
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
