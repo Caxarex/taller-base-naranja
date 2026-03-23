@@ -28,8 +28,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    let cancelled = false;
     const fetchShop = async () => {
-      setLoading(true);
       const { data, error } = await supabase
         .from("shop_members")
         .select("shop_id, role, shops(name)")
@@ -37,6 +37,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         .eq("status", "active")
         .limit(1)
         .maybeSingle();
+
+      if (cancelled) return;
 
       if (data && !error) {
         const shopData = data.shops as unknown as { name: string };
@@ -52,7 +54,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     };
 
     fetchShop();
-  }, [user]);
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   return (
     <ShopContext.Provider value={{ currentShop, loading, hasShop: !!currentShop }}>
