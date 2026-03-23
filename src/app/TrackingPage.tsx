@@ -1,22 +1,93 @@
 import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge } from "@/components/StatusBadge";
 import { OrderTimeline } from "@/components/OrderTimeline";
-import { getOrdenByCodigo, getCliente, getVehiculo, formatMoney } from "@/lib/mock/data";
 import { Wrench, Car, CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { OrdenEstado, OrdenTimeline as TTimeline } from "@/types";
+
+// Utility to format money
+function formatMoney(amount: number) {
+  return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(amount);
+}
+
+// Map DB status to display status
+const STATUS_LABELS: Record<string, OrdenEstado> = {
+  recibido: "Recibido",
+  diagnostico: "Diagnóstico",
+  cotizado: "Cotizado",
+  aprobado: "Aprobado",
+  en_reparacion: "En reparación",
+  listo: "Listo",
+  entregado: "Entregado",
+};
+
+interface TrackingData {
+  order: {
+    public_code: string;
+    status: string;
+    problem_description: string | null;
+    subtotal: number;
+    labor_total: number;
+    total: number;
+    paid_total: number;
+    balance_due: number;
+    created_at: string;
+  };
+  vehicle: {
+    plate: string;
+    make: string;
+    model: string;
+    year: number | null;
+    color: string | null;
+  };
+  shop: {
+    name: string;
+    phone: string | null;
+  };
+  timeline: Array<{ status: string; created_at: string }>;
+  items: Array<{ type: string; name: string; quantity: number; unit_price: number; total_price: number }>;
+}
 
 export default function TrackingPage() {
   const { codigo } = useParams<{ codigo: string }>();
-  const orden = getOrdenByCodigo(codigo || "");
+  const [data, setData] = useState<TrackingData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  if (!orden) {
+  useEffect(() => {
+    if (!codigo) { setNotFound(true); setLoading(false); return; }
+
+    const fetch = async () => {
+      const { data: result, error } = await supabase.rpc("get_public_tracking", { p_code: codigo });
+      const parsed = result as unknown as TrackingData;
+      if (error || !parsed?.order) {
+        setNotFound(true);
+      } else {
+        setData(parsed);
+      }
+      setLoading(false);
+    };
+    fetch();
+  }, [codigo]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (notFound || !data) {
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-elevated mx-auto mb-4">
             <Wrench className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h1 className="font-display text-display-sm text-foreground mb-2">Orden no encontrada</h1>
+          <h1 className="font-display text-xl font-bold text-foreground mb-2">Orden no encontrada</h1>
           <p className="text-sm text-muted-foreground">
             Verifica el código de seguimiento e intenta de nuevo.
           </p>
@@ -25,17 +96,25 @@ export default function TrackingPage() {
     );
   }
 
-  const cliente = getCliente(orden.clienteId);
-  const vehiculo = getVehiculo(orden.vehiculoId);
+  const { order, vehicle, shop, timeline, items } = data;
+  const displayStatus = STATUS_LABELS[order.status] ?? "Recibido";
+
+  const timelineFormatted: TTimeline[] = timeline.map((t) => ({
+    estado: STATUS_LABELS[t.status] ?? ("Recibido" as OrdenEstado),
+    fecha: t.created_at.split("T")[0],
+  }));
+
+  const partsTotal = items.filter((i) => i.type === "part").reduce((s, i) => s + i.total_price, 0);
+  const laborTotal = items.filter((i) => i.type === "labor").reduce((s, i) => s + i.total_price, 0);
 
   const statusMessage =
-    orden.estado === "Listo"
+    displayStatus === "Listo"
       ? "¡Tu vehículo está listo! Comunícate con el taller para coordinar la entrega."
-      : orden.estado === "Entregado"
+      : displayStatus === "Entregado"
       ? "Tu orden ha sido completada y entregada. ¡Gracias por tu confianza!"
       : "Tu vehículo está siendo atendido. Te notificaremos cuando haya novedades.";
 
-  const StatusIcon = orden.estado === "Listo" || orden.estado === "Entregado" ? CheckCircle2 : Clock;
+  const StatusIcon = displayStatus === "Listo" || displayStatus === "Entregado" ? CheckCircle2 : Clock;
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -47,7 +126,7 @@ export default function TrackingPage() {
               <Wrench className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-display text-lg font-bold text-foreground">Taller Méndez</h1>
+              <h1 className="font-display text-lg font-bold text-foreground">{shop.name}</h1>
               <p className="text-xs text-muted-foreground">Seguimiento de orden</p>
             </div>
           </div>
@@ -58,91 +137,103 @@ export default function TrackingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
           {/* Main content */}
           <div className="lg:col-span-7 flex flex-col gap-4">
-            {/* Order code + status hero */}
+            {/* Order code + status */}
             <div className="rounded-xl border border-border bg-card p-5 lg:p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Código de orden</p>
-                  <p className="font-display text-display-md lg:text-display-lg text-foreground">{orden.codigo}</p>
+                  <p className="font-display text-2xl lg:text-3xl font-bold text-foreground">{order.public_code}</p>
                 </div>
-                <StatusBadge estado={orden.estado} size="md" />
+                <StatusBadge estado={displayStatus} size="md" />
               </div>
 
-              {/* Vehicle */}
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-elevated">
-                <Car className="h-5 w-5 text-muted-foreground shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {vehiculo?.marca} {vehiculo?.modelo} {vehiculo?.anio}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Placa: <span className="font-mono font-bold text-foreground">{vehiculo?.placa}</span>
-                    <span className="ml-2">· {vehiculo?.color}</span>
-                  </p>
+              {vehicle && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-elevated">
+                  <Car className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {vehicle.make} {vehicle.model} {vehicle.year}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Placa: <span className="font-mono font-bold text-foreground">{vehicle.plate}</span>
+                      {vehicle.color && <span className="ml-2">· {vehicle.color}</span>}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Status message */}
             <div className={cn(
               "rounded-xl border p-4 flex items-start gap-3",
-              orden.estado === "Listo"
+              displayStatus === "Listo"
                 ? "border-success/30 bg-success/5"
-                : orden.estado === "Entregado"
+                : displayStatus === "Entregado"
                 ? "border-border bg-card"
                 : "border-info/30 bg-info/5"
             )}>
               <StatusIcon className={cn(
                 "h-5 w-5 shrink-0 mt-0.5",
-                orden.estado === "Listo" ? "text-success" : orden.estado === "Entregado" ? "text-muted-foreground" : "text-info"
+                displayStatus === "Listo" ? "text-success" : displayStatus === "Entregado" ? "text-muted-foreground" : "text-info"
               )} />
               <p className="text-sm text-foreground">{statusMessage}</p>
             </div>
 
             {/* Timeline */}
-            <div className="rounded-xl border border-border bg-card p-5">
-              <h2 className="font-display text-sm font-semibold text-foreground mb-4">Estado de tu orden</h2>
-              <OrderTimeline timeline={orden.timeline} estadoActual={orden.estado} />
-            </div>
+            {timelineFormatted.length > 0 && (
+              <div className="rounded-xl border border-border bg-card p-5">
+                <h2 className="font-display text-sm font-semibold text-foreground mb-4">Estado de tu orden</h2>
+                <OrderTimeline timeline={timelineFormatted} estadoActual={displayStatus} />
+              </div>
+            )}
           </div>
 
-          {/* Sidebar - quote summary */}
+          {/* Sidebar */}
           <div className="lg:col-span-5">
             <div className="rounded-xl border border-border bg-card p-5 lg:sticky lg:top-8">
               <h2 className="font-display text-sm font-semibold text-foreground mb-4">Resumen de cotización</h2>
 
               <div className="flex flex-col gap-2 mb-3">
-                {orden.refacciones.length > 0 && (
+                {partsTotal > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Refacciones</span>
-                    <span className="text-foreground font-medium">{formatMoney(orden.totalRefacciones)}</span>
+                    <span className="text-foreground font-medium">{formatMoney(partsTotal)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Mano de obra</span>
-                  <span className="text-foreground font-medium">{formatMoney(orden.totalManoDeObra)}</span>
-                </div>
+                {laborTotal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Mano de obra</span>
+                    <span className="text-foreground font-medium">{formatMoney(laborTotal)}</span>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-border pt-3 mb-3">
                 <div className="flex justify-between text-base font-bold mb-2">
                   <span className="text-foreground">Total</span>
-                  <span className="text-foreground">{formatMoney(orden.total)}</span>
+                  <span className="text-foreground">{formatMoney(order.total)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Abonado</span>
-                  <span className="text-success font-semibold">{formatMoney(orden.abonado)}</span>
+                  <span className="text-success font-semibold">{formatMoney(order.paid_total)}</span>
                 </div>
               </div>
 
-              {orden.saldoPendiente > 0 && (
+              {order.balance_due > 0 && (
                 <div className="rounded-lg bg-primary/10 p-3 mt-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-bold text-primary">Saldo pendiente</span>
                     <span className="font-display text-lg font-bold text-primary">
-                      {formatMoney(orden.saldoPendiente)}
+                      {formatMoney(order.balance_due)}
                     </span>
                   </div>
+                </div>
+              )}
+
+              {shop.phone && (
+                <div className="mt-4 pt-3 border-t border-border">
+                  <p className="text-xs text-muted-foreground">¿Dudas? Contáctanos</p>
+                  <p className="text-sm font-medium text-foreground mt-1">{shop.phone}</p>
                 </div>
               )}
             </div>
