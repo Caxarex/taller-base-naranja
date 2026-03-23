@@ -1,9 +1,10 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 interface MetricCardProps {
   label: string;
-  value: React.ReactNode;
+  value: ReactNode;
   icon?: LucideIcon;
   trend?: string;
   variant?: "default" | "hero" | "warning" | "danger" | "success";
@@ -29,7 +30,7 @@ const iconVariantStyles = {
 export function MetricCard({ label, value, icon: Icon, trend, variant = "default", className }: MetricCardProps) {
   return (
     <div className={cn(
-      "rounded-xl border p-4 md:p-5 transition-shadow hover:shadow-card-hover",
+      "rounded-xl border p-4 md:p-5 transition-all duration-200 hover:shadow-card-hover",
       variantStyles[variant],
       className
     )}>
@@ -47,7 +48,7 @@ export function MetricCard({ label, value, icon: Icon, trend, variant = "default
           )}
         </div>
         {Icon && (
-          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0", iconVariantStyles[variant])}>
+          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110", iconVariantStyles[variant])}>
             <Icon className="h-5 w-5" />
           </div>
         )}
