@@ -11,6 +11,7 @@ import {
   Wrench, ArrowRight, ClipboardList, HandCoins, Package, Radio, Sun, Moon,
   AlertTriangle, BarChart3, Shield, Clock, Users, CheckCircle2, ChevronDown,
   Smartphone, TrendingUp, Eye, Bell, Zap, Car, Sparkles, ArrowUpRight,
+  CircleDot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
