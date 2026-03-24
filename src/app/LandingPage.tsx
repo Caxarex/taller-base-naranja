@@ -530,7 +530,7 @@ export default function LandingPage() {
                 className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-card hover:shadow-card-hover hover:border-primary/20 transition-all duration-200 group cursor-default"
               >
                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-200">
-                  <f.icon className="h-4.5 w-4.5 text-primary" />
+                  <f.icon className="h-[18px] w-[18px] text-primary" />
                 </div>
                 <span className="text-sm font-medium">{f.label}</span>
               </motion.div>

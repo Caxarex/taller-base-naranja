@@ -18,7 +18,7 @@ import {
   CircleDot, Truck, AlertCircle, Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, formatDistanceToNow, isAfter, isBefore, addDays } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
