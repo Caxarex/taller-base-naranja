@@ -8,9 +8,10 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { formatMoney, STATUS_ORDER } from "@/lib/format";
 import { PageTransition, motion } from "@/components/motion";
-import { Car, User, FileText, Wrench, DollarSign, StickyNote, ArrowRight, CheckCircle2, ExternalLink, Copy } from "lucide-react";
+import { Car, User, FileText, Wrench, DollarSign, StickyNote, ArrowRight, CheckCircle2, ExternalLink, Copy, Phone, HandCoins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 function DetailSkeleton() {
   return (
@@ -26,13 +27,13 @@ function DetailSkeleton() {
   );
 }
 
-function InfoCard({ icon: Icon, label, children, delay = 0 }: { icon: any; label: string; children: React.ReactNode; delay?: number }) {
+function InfoCard({ icon: Icon, label, children, delay = 0, className: extraClass }: { icon: any; label: string; children: React.ReactNode; delay?: number; className?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="rounded-xl border border-border bg-card p-4 hover:shadow-card-hover transition-shadow duration-300"
+      className={cn("rounded-xl border border-border bg-card p-4 hover:shadow-card-hover transition-shadow duration-300", extraClass)}
     >
       <div className="flex items-center gap-2 text-muted-foreground mb-2">
         <Icon className="h-4 w-4" /> <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
@@ -83,6 +84,20 @@ export default function OrdenDetallePage() {
         .eq("order_id", id!)
         .order("created_at", { ascending: true });
       return data || [];
+    },
+    enabled: !!id,
+  });
+
+  // Check for related fiado
+  const { data: relatedFiado } = useQuery({
+    queryKey: ["order-fiado", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("fiados")
+        .select("id, status, balance_due")
+        .eq("order_id", id!)
+        .maybeSingle();
+      return data;
     },
     enabled: !!id,
   });
@@ -186,6 +201,14 @@ export default function OrdenDetallePage() {
                 Saldo: {formatMoney(Number(order.balance_due))}
               </motion.span>
             )}
+            {relatedFiado && (
+              <Link
+                to={`/app/fiados/${relatedFiado.id}`}
+                className="inline-flex items-center gap-1 text-xs text-warning hover:underline"
+              >
+                <HandCoins className="h-3 w-3" /> Ver fío ({formatMoney(Number(relatedFiado.balance_due))})
+              </Link>
+            )}
             <Link
               to={`/t/${order.public_code}`}
               target="_blank"
@@ -201,7 +224,11 @@ export default function OrdenDetallePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <InfoCard icon={User} label="Cliente" delay={0.12}>
                   <p className="text-sm font-semibold">{cust?.full_name || "Sin cliente"}</p>
-                  {cust?.phone && <p className="text-xs text-muted-foreground">{cust.phone}</p>}
+                  {cust?.phone && (
+                    <a href={`tel:${cust.phone}`} className="flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+                      <Phone className="h-3 w-3" /> {cust.phone}
+                    </a>
+                  )}
                 </InfoCard>
                 <InfoCard icon={Car} label="Vehículo" delay={0.16}>
                   <p className="text-sm font-semibold">{veh ? `${veh.make} ${veh.model} ${veh.year || ""}` : "Sin vehículo"}</p>
@@ -313,7 +340,7 @@ export default function OrdenDetallePage() {
             </div>
 
             {/* Timeline sidebar */}
-            <div>
+            <div className="space-y-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -335,6 +362,45 @@ export default function OrdenDetallePage() {
                     </Button>
                   </motion.div>
                 )}
+              </motion.div>
+
+              {/* Contextual Links */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.4 }}
+                className="rounded-xl border border-border bg-card p-4 md:p-5"
+              >
+                <h3 className="font-display text-sm font-semibold mb-3">Accesos rápidos</h3>
+                <div className="space-y-1.5">
+                  <Link
+                    to={`/t/${order.public_code}`}
+                    target="_blank"
+                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-elevated transition-colors text-sm group"
+                  >
+                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                    <span className="group-hover:text-primary transition-colors">Tracking público</span>
+                  </Link>
+                  {relatedFiado && (
+                    <Link
+                      to={`/app/fiados/${relatedFiado.id}`}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-elevated transition-colors text-sm group"
+                    >
+                      <HandCoins className="h-4 w-4 text-warning" />
+                      <span className="group-hover:text-primary transition-colors">
+                        Fío · {formatMoney(Number(relatedFiado.balance_due))}
+                      </span>
+                      <StatusBadge status={relatedFiado.status} />
+                    </Link>
+                  )}
+                  <button
+                    onClick={copyTrackingLink}
+                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-elevated transition-colors text-sm w-full text-left group"
+                  >
+                    <Copy className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                    <span className="group-hover:text-primary transition-colors">Copiar link de tracking</span>
+                  </button>
+                </div>
               </motion.div>
             </div>
           </div>
