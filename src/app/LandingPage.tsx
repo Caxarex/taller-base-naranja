@@ -87,7 +87,7 @@ function NavBar() {
           </motion.div>
           <span className="font-display text-lg font-bold">Tallio</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <motion.button
             onClick={toggleTheme}
             whileTap={{ scale: 0.85, rotate: 180 }}
@@ -97,10 +97,13 @@ function NavBar() {
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </motion.button>
-          <Link to="/auth/login"><Button variant="ghost" size="sm">Ingresar</Button></Link>
+          <Link to="/auth/login"><Button variant="ghost" size="sm" className="hidden sm:inline-flex">Ingresar</Button></Link>
+          <Link to="/auth/login"><Button variant="ghost" size="sm" className="sm:hidden px-2">Entrar</Button></Link>
           <Link to="/auth/register">
-            <Button size="sm" className="gap-1.5 group">
-              Crear taller <ArrowUpRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <Button size="sm" className="gap-1 sm:gap-1.5 group text-xs sm:text-sm px-3 sm:px-4">
+              <span className="hidden sm:inline">Crear taller</span>
+              <span className="sm:hidden">Crear</span>
+              <ArrowUpRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Button>
           </Link>
         </div>
