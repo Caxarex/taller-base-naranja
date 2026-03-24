@@ -832,7 +832,7 @@ export default function LandingPage() {
                     transition={{ delay: 0.15 + i * 0.06, duration: 0.3 }}
                     className="flex items-start gap-2.5 text-sm"
                   >
-                    <div className="h-4.5 w-4.5 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="h-[18px] w-[18px] rounded-full bg-success/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle2 className="h-3 w-3 text-success" />
                     </div>
                     {t}

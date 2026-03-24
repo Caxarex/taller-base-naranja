@@ -217,7 +217,7 @@ export default function NuevaOrdenPage() {
                         )}
                       >
                         <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                          <CarFront className="h-4.5 w-4.5 text-muted-foreground" />
+                          <CarFront className="h-[18px] w-[18px] text-muted-foreground" />
                         </div>
                         <div>
                           <p className="text-sm font-semibold">{v.plate} · {v.make} {v.model}</p>
