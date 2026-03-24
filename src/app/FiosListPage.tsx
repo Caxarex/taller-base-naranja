@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useShop } from "@/hooks/useShop";
 import { AppShell } from "@/components/AppShell";
@@ -10,8 +10,10 @@ import { FilterChips } from "@/components/FilterChips";
 import { EmptyState } from "@/components/EmptyState";
 import { formatMoney } from "@/lib/format";
 import { PageTransition, AnimatedProgress, AnimatedNumber, motion, HoverCard, AnimatePresence } from "@/components/motion";
-import { HandCoins, ArrowRight, TrendingUp, AlertTriangle } from "lucide-react";
-import { format } from "date-fns";
+import { HandCoins, ArrowRight, TrendingUp, AlertTriangle, Search, DollarSign, CalendarClock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -46,14 +48,16 @@ function FiadoSkeleton({ index }: { index: number }) {
 
 export default function FiosListPage() {
   const { currentShop } = useShop();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
   const { data: fiados, isLoading } = useQuery({
     queryKey: ["fiados", currentShop?.shopId],
     queryFn: async () => {
       const { data } = await supabase
         .from("fiados")
-        .select("*, customers(full_name)")
+        .select("*, customers(full_name, phone), orders(public_code)")
         .eq("shop_id", currentShop!.shopId)
         .order("due_date", { ascending: true });
       return data || [];
@@ -62,13 +66,27 @@ export default function FiosListPage() {
   });
 
   const filtered = useMemo(() => {
-    if (!fiados) return [];
-    if (filter === "all") return fiados;
-    return fiados.filter(f => f.status === filter);
-  }, [fiados, filter]);
+    let result = fiados || [];
+    if (filter !== "all") result = result.filter(f => f.status === filter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(f => {
+        const cust = f.customers as unknown as { full_name: string; phone: string } | null;
+        const ord = f.orders as unknown as { public_code: string } | null;
+        return (
+          (cust?.full_name || "").toLowerCase().includes(q) ||
+          (cust?.phone || "").includes(q) ||
+          (ord?.public_code || "").toLowerCase().includes(q)
+        );
+      });
+    }
+    return result;
+  }, [fiados, filter, search]);
 
   const totalPending = fiados?.filter(f => f.status !== "pagado").reduce((s, f) => s + Number(f.balance_due), 0) || 0;
   const overdueTotal = fiados?.filter(f => f.status === "vencido").reduce((s, f) => s + Number(f.balance_due), 0) || 0;
+  const nearDueTotal = fiados?.filter(f => f.status === "por_vencer").reduce((s, f) => s + Number(f.balance_due), 0) || 0;
+  const recentPaid = fiados?.filter(f => f.status === "pagado").length || 0;
 
   const filterCounts = useMemo(() => {
     if (!fiados) return {};
@@ -83,44 +101,52 @@ export default function FiosListPage() {
         <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 max-w-5xl mx-auto space-y-5">
           <PageHeader title="Fíos" subtitle="Cartera de créditos del taller" />
 
+          {/* Cartera Summary */}
           {!isLoading && fiados && fiados.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <HoverCard>
-                  <div className="rounded-xl border border-warning/20 bg-warning/5 p-4">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <TrendingUp className="h-3.5 w-3.5 text-warning" />
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Por cobrar</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: "Por cobrar", value: totalPending, icon: TrendingUp, color: "border-warning/20 bg-warning/5", textColor: "text-warning" },
+                { label: "Vencido", value: overdueTotal, icon: AlertTriangle, color: "border-destructive/20 bg-destructive/5", textColor: "text-destructive" },
+                { label: "Por vencer", value: nearDueTotal, icon: CalendarClock, color: "border-info/20 bg-info/5", textColor: "text-info" },
+                { label: "Pagados", value: recentPaid, icon: DollarSign, color: "border-success/20 bg-success/5", textColor: "text-success", isCount: true },
+              ].map((item, idx) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.08 + idx * 0.06, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <HoverCard>
+                    <div className={cn("rounded-xl border p-3.5 md:p-4", item.color)}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <item.icon className={cn("h-3.5 w-3.5", item.textColor)} />
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{item.label}</p>
+                      </div>
+                      <p className={cn("font-display text-lg md:text-metric font-bold", item.textColor)}>
+                        {item.isCount ? item.value : <AnimatedNumber value={item.value} prefix="$" />}
+                      </p>
                     </div>
-                    <p className="font-display text-metric font-bold text-warning">
-                      <AnimatedNumber value={totalPending} prefix="$" />
-                    </p>
-                  </div>
-                </HoverCard>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.14, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <HoverCard>
-                  <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Vencido</p>
-                    </div>
-                    <p className="font-display text-metric font-bold text-destructive">
-                      <AnimatedNumber value={overdueTotal} prefix="$" />
-                    </p>
-                  </div>
-                </HoverCard>
-              </motion.div>
+                  </HoverCard>
+                </motion.div>
+              ))}
             </div>
           )}
+
+          {/* Search */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.35 }}
+            className="relative"
+          >
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por cliente, teléfono u orden…"
+              className="pl-9"
+            />
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -140,8 +166,8 @@ export default function FiosListPage() {
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
               <EmptyState
                 icon={HandCoins}
-                title={filter !== "all" ? "Sin fíos en esta categoría" : "Sin fíos registrados"}
-                description="Los fíos aparecen cuando se registran saldos pendientes"
+                title={search || filter !== "all" ? "Sin resultados" : "Sin fíos registrados"}
+                description={search || filter !== "all" ? "Intenta con otros filtros" : "Los fíos aparecen cuando se registran saldos pendientes"}
               />
             </motion.div>
           ) : (
@@ -149,6 +175,7 @@ export default function FiosListPage() {
               <div className="space-y-2">
                 {filtered.map((f, idx) => {
                   const cust = f.customers as unknown as { full_name: string } | null;
+                  const ord = f.orders as unknown as { public_code: string } | null;
                   const progress = f.total_amount > 0 ? (Number(f.paid_amount) / Number(f.total_amount)) * 100 : 0;
                   return (
                     <motion.div
@@ -167,12 +194,17 @@ export default function FiosListPage() {
                         )}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1.5">
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                             <span className="text-sm font-semibold truncate">{cust?.full_name || "Sin cliente"}</span>
                             <StatusBadge status={f.status} />
+                            {ord?.public_code && (
+                              <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
+                                {ord.public_code}
+                              </span>
+                            )}
                           </div>
                           <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mb-1">
-                            <AnimatedProgress value={progress} className={cn("rounded-full h-1.5", f.status === "vencido" ? "bg-destructive" : "bg-primary")} />
+                            <AnimatedProgress value={progress} className={cn("rounded-full h-1.5", f.status === "vencido" ? "bg-destructive" : f.status === "pagado" ? "bg-success" : "bg-primary")} />
                           </div>
                           <p className="text-[11px] text-muted-foreground">
                             {formatMoney(Number(f.paid_amount))} de {formatMoney(Number(f.total_amount))}
@@ -180,9 +212,14 @@ export default function FiosListPage() {
                           </p>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className={cn("text-sm font-bold", f.status === "vencido" ? "text-destructive" : f.status === "por_vencer" ? "text-warning" : "text-foreground")}>
-                            {formatMoney(Number(f.balance_due))}
+                          <p className={cn("text-sm font-bold", f.status === "vencido" ? "text-destructive" : f.status === "por_vencer" ? "text-warning" : f.status === "pagado" ? "text-success" : "text-foreground")}>
+                            {f.status === "pagado" ? "Pagado" : formatMoney(Number(f.balance_due))}
                           </p>
+                          {f.due_date && f.status !== "pagado" && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {formatDistanceToNow(new Date(f.due_date), { addSuffix: true, locale: es })}
+                            </p>
+                          )}
                         </div>
                         <ArrowRight className="h-4 w-4 text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-all duration-200 flex-shrink-0" />
                       </Link>

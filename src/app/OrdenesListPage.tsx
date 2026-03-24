@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 const FILTERS = [
   { label: "Todas", value: "all" },
@@ -155,6 +156,7 @@ export default function OrdenesListPage() {
                 {filtered.map((order, idx) => {
                   const cust = order.customers as unknown as { full_name: string } | null;
                   const veh = order.vehicles as unknown as { plate: string; make: string; model: string } | null;
+                  const hasPending = Number(order.balance_due) > 0;
                   return (
                     <motion.div
                       key={order.id}
@@ -183,13 +185,21 @@ export default function OrdenesListPage() {
                           <p className="text-xs text-muted-foreground mt-0.5 truncate">
                             {cust?.full_name || "Sin cliente"} · {veh?.plate || "—"} · {veh?.make} {veh?.model}
                           </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 lg:hidden">
-                            {format(new Date(order.created_at), "d MMM yyyy", { locale: es })}
-                          </p>
+                          {/* Mobile: show date + saldo */}
+                          <div className="flex items-center gap-2 mt-0.5 sm:hidden">
+                            <p className="text-[11px] text-muted-foreground">
+                              {format(new Date(order.created_at), "d MMM yyyy", { locale: es })}
+                            </p>
+                            {hasPending && (
+                              <span className="text-[11px] font-medium text-destructive">
+                                Saldo: {formatMoney(Number(order.balance_due))}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="text-right flex-shrink-0 hidden sm:block">
                           <p className="text-sm font-bold">{formatMoney(Number(order.total))}</p>
-                          {Number(order.balance_due) > 0 && (
+                          {hasPending && (
                             <p className="text-xs text-destructive">Saldo: {formatMoney(Number(order.balance_due))}</p>
                           )}
                           <p className="text-[11px] text-muted-foreground mt-0.5">
