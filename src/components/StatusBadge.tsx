@@ -13,7 +13,7 @@ const statusStyles: Record<string, string> = {
   rechazado: "bg-destructive/10 text-destructive border-destructive/20",
   cancelado: "bg-muted text-muted-foreground border-border",
   pendiente: "bg-warning/10 text-warning border-warning/20",
-  por_vencer: "bg-accent/10 text-accent border-accent/20",
+  por_vencer: "bg-warning/10 text-warning border-warning/20",
   vencido: "bg-destructive/10 text-destructive border-destructive/20",
   pagado: "bg-success/10 text-success border-success/20",
 };

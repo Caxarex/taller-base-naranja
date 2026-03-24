@@ -87,7 +87,7 @@ function NavBar() {
           </motion.div>
           <span className="font-display text-lg font-bold">Tallio</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <motion.button
             onClick={toggleTheme}
             whileTap={{ scale: 0.85, rotate: 180 }}
@@ -97,10 +97,13 @@ function NavBar() {
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </motion.button>
-          <Link to="/auth/login"><Button variant="ghost" size="sm">Ingresar</Button></Link>
+          <Link to="/auth/login"><Button variant="ghost" size="sm" className="hidden sm:inline-flex">Ingresar</Button></Link>
+          <Link to="/auth/login"><Button variant="ghost" size="sm" className="sm:hidden px-2">Entrar</Button></Link>
           <Link to="/auth/register">
-            <Button size="sm" className="gap-1.5 group">
-              Crear taller <ArrowUpRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <Button size="sm" className="gap-1 sm:gap-1.5 group text-xs sm:text-sm px-3 sm:px-4">
+              <span className="hidden sm:inline">Crear taller</span>
+              <span className="sm:hidden">Crear</span>
+              <ArrowUpRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Button>
           </Link>
         </div>
@@ -527,7 +530,7 @@ export default function LandingPage() {
                 className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-card hover:shadow-card-hover hover:border-primary/20 transition-all duration-200 group cursor-default"
               >
                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-200">
-                  <f.icon className="h-4.5 w-4.5 text-primary" />
+                  <f.icon className="h-[18px] w-[18px] text-primary" />
                 </div>
                 <span className="text-sm font-medium">{f.label}</span>
               </motion.div>
@@ -829,7 +832,7 @@ export default function LandingPage() {
                     transition={{ delay: 0.15 + i * 0.06, duration: 0.3 }}
                     className="flex items-start gap-2.5 text-sm"
                   >
-                    <div className="h-4.5 w-4.5 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="h-[18px] w-[18px] rounded-full bg-success/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle2 className="h-3 w-3 text-success" />
                     </div>
                     {t}

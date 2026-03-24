@@ -32,7 +32,7 @@ export function ScrollToTop({ className }: { className?: string }) {
           )}
           aria-label="Volver arriba"
         >
-          <ArrowUp className="h-4.5 w-4.5" />
+          <ArrowUp className="h-[18px] w-[18px]" />
         </motion.button>
       )}
     </AnimatePresence>
