@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useShop } from "@/hooks/useShop";
 import { supabase } from "@/integrations/supabase/client";
 import { seedDemoData } from "@/lib/seedDemoData";
 import { Wrench, Check, Store, MapPin } from "lucide-react";
@@ -11,9 +12,17 @@ import { toast } from "sonner";
 
 export default function SetupTallerPage() {
   const { user } = useAuth();
+  const { hasShop, loading: shopLoading } = useShop();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", city: "" });
+
+  // Redirect if user already has a shop
+  useEffect(() => {
+    if (!shopLoading && hasShop) {
+      navigate("/app", { replace: true });
+    }
+  }, [shopLoading, hasShop, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
