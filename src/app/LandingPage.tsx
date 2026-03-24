@@ -11,6 +11,7 @@ import {
   Wrench, ArrowRight, ClipboardList, HandCoins, Package, Radio, Sun, Moon,
   AlertTriangle, BarChart3, Shield, Clock, Users, CheckCircle2, ChevronDown,
   Smartphone, TrendingUp, Eye, Bell, Zap, Car, Sparkles, ArrowUpRight,
+  CircleDot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -766,7 +767,154 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════ 13. FAQ ══════ */}
+      {/* ══════ 13. QUÉ CAMBIA ══════ */}
+      <section className="py-20 md:py-28 relative overflow-hidden">
+        <GradientOrb className="w-[400px] h-[400px] top-0 -left-20 bg-success/8 dark:bg-success/4" />
+        <div className="max-w-6xl mx-auto px-4 md:px-6 relative">
+          <ScrollReveal>
+            <SectionTitle tag="Antes y después" title="Qué cambia cuando usas Tallio" center className="mb-12" />
+          </ScrollReveal>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto">
+            {/* Antes */}
+            <FloatingPanel delay={0} className="p-6 md:p-8 border-destructive/20 bg-destructive/[0.02] dark:bg-destructive/[0.03]">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                </div>
+                <h3 className="font-display text-sm font-bold text-destructive">Antes</h3>
+              </div>
+              <ul className="space-y-3">
+                {[
+                  "Órdenes en libretas o papelitos",
+                  "Fíos cobrados de memoria",
+                  "Clientes preguntando por WhatsApp",
+                  "No sabes qué refacciones tienes",
+                  "Pierdes información y dinero",
+                ].map((t, i) => (
+                  <motion.li
+                    key={t}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.06, duration: 0.3 }}
+                    className="flex items-start gap-2.5 text-sm text-muted-foreground"
+                  >
+                    <span className="text-destructive/60 mt-0.5">✕</span>
+                    {t}
+                  </motion.li>
+                ))}
+              </ul>
+            </FloatingPanel>
+            {/* Después */}
+            <FloatingPanel delay={0.15} className="p-6 md:p-8 border-success/20 bg-success/[0.02] dark:bg-success/[0.03]">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                </div>
+                <h3 className="font-display text-sm font-bold text-success">Con Tallio</h3>
+              </div>
+              <ul className="space-y-3">
+                {[
+                  "Órdenes claras con timeline visual",
+                  "Fíos con saldos, vencimiento y alertas",
+                  "Tracking público para el cliente",
+                  "Inventario vigilado con alertas de stock",
+                  "Control total desde el celular",
+                ].map((t, i) => (
+                  <motion.li
+                    key={t}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.15 + i * 0.06, duration: 0.3 }}
+                    className="flex items-start gap-2.5 text-sm"
+                  >
+                    <div className="h-4.5 w-4.5 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle2 className="h-3 w-3 text-success" />
+                    </div>
+                    {t}
+                  </motion.li>
+                ))}
+              </ul>
+            </FloatingPanel>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 14. FLUJO REAL DE USO ══════ */}
+      <section className="border-t border-border bg-surface py-20 md:py-28">
+        <div className="max-w-6xl mx-auto px-4 md:px-6">
+          <ScrollReveal>
+            <SectionTitle tag="Flujo real" title="Así se usa Tallio en un día normal" desc="No es complicado. No es lento. Es lo que necesitas, cuando lo necesitas." center className="mb-12" />
+          </ScrollReveal>
+          <div className="max-w-3xl mx-auto space-y-4">
+            {[
+              { step: "1", title: "Llega un auto", desc: "Registras al cliente, el vehículo y el problema. Tallio genera la orden y el código de tracking.", icon: Car },
+              { step: "2", title: "Diagnosticas y cotizas", desc: "Agregas refacciones y mano de obra. El total se calcula solo. El cliente puede aprobar.", icon: Wrench },
+              { step: "3", title: "Avanzas el estado", desc: "Un clic para mover la orden: diagnóstico → cotizado → aprobado → en reparación → listo.", icon: CircleDot },
+              { step: "4", title: "El cliente consulta", desc: "Con su código, ve el progreso desde su celular. Sin llamarte. Sin WhatsApp.", icon: Eye },
+              { step: "5", title: "Entregas y cobras", desc: "Si queda saldo, Tallio lo convierte en fío con vencimiento y alertas. Nada se olvida.", icon: CheckCircle2 },
+              { step: "6", title: "Tú mantienes control", desc: "Dashboard con métricas, cartera de fíos, inventario y actividad reciente. Todo en un solo lugar.", icon: BarChart3 },
+            ].map((s, idx) => (
+              <motion.div
+                key={s.step}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-30px" }}
+                transition={{ delay: idx * 0.06, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:shadow-card-hover hover:border-primary/20 transition-all duration-200 group"
+              >
+                <div className="flex-shrink-0 flex flex-col items-center">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 transition-colors"
+                  >
+                    <s.icon className="h-5 w-5 text-primary" />
+                  </motion.div>
+                  {idx < 5 && <div className="w-px h-4 bg-border mt-2" />}
+                </div>
+                <div className="pt-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Paso {s.step}</span>
+                    <h3 className="font-display text-sm font-semibold">{s.title}</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed mt-1">{s.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ 15. MENOS VUELTAS ══════ */}
+      <section className="py-20 md:py-28 relative overflow-hidden">
+        <GradientOrb className="w-[500px] h-[500px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary/10 dark:bg-primary/5" />
+        <div className="max-w-4xl mx-auto px-4 md:px-6 text-center relative">
+          <ScrollReveal>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 p-8 md:p-12"
+            >
+              <SectionTitle
+                tag="Filosofía"
+                title="Menos vueltas. Más control."
+                desc="Tallio no es un ERP gigante ni una app de moda. Es el sistema que tu taller necesita para dejar de improvisar y empezar a operar con orden, claridad y profesionalismo."
+                center
+              />
+              <div className="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto">
+                <StatCounter label="Menos llamadas" value="-70" suffix="%" />
+                <StatCounter label="Menos olvidos" value="-90" suffix="%" />
+                <StatCounter label="Más cobros" value="+40" suffix="%" />
+              </div>
+            </motion.div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ══════ 16. FAQ ══════ */}
       <section className="py-20 md:py-28">
         <div className="max-w-3xl mx-auto px-4 md:px-6">
           <ScrollReveal><SectionTitle tag="Preguntas frecuentes" title="¿Tienes dudas?" className="mb-10" /></ScrollReveal>
